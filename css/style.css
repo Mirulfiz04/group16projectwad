@@ -130,10 +130,16 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .cats {
   position: sticky; top: 110px; z-index: 19;
   background: var(--cream);
-  display: flex; gap: 8px; overflow-x: auto; padding: 8px 16px 12px;
-  scrollbar-width: none; border-bottom: 1px solid var(--line);
+  display: flex; gap: 8px; overflow-x: auto; padding: 8px 16px 10px;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: thin;                          /* Firefox: slim bar */
+  scrollbar-color: var(--red) #efe6cd;            /* thumb, track (Firefox) */
 }
-.cats::-webkit-scrollbar { display: none; }
+/* Chrome / Edge / Safari: slim styled horizontal scrollbar */
+.cats::-webkit-scrollbar { height: 6px; }
+.cats::-webkit-scrollbar-track { background: #efe6cd; border-radius: 999px; }
+.cats::-webkit-scrollbar-thumb { background: var(--red); border-radius: 999px; }
+.cats::-webkit-scrollbar-thumb:hover { background: var(--red-dark); }
 .cat-chip {
   flex: 0 0 auto; padding: 8px 14px; border-radius: 999px;
   background: #fff; border: 1px solid var(--line); color: var(--ink);
