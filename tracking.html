@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d6342b" />
+  <title>Track Order — Sup Tulang ZZ</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="back" href="menu.html">←</a>
+      <div class="title">Order Status <small id="tableSmall">Table —</small></div>
+      <a class="cart-link" href="cart.html">🛒<span class="cart-badge">0</span></a>
+    </header>
+
+    <main class="page" id="page"></main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+  document.getElementById("tableSmall").textContent = Table.get() ? ("Table " + Table.get()) : "Walk-in";
+
+  const pageEl = document.getElementById("page");
+
+  const STEPS = [
+    { key: "pending",   label: "Order Received",  sub: "Sent to the kitchen",      icon: "📝" },
+    { key: "preparing", label: "In Progress",     sub: "Your food is being cooked", icon: "👨‍🍳" },
+    { key: "ready",     label: "Ready",           sub: "Ready to be served",        icon: "🔔" },
+    { key: "completed", label: "Completed",       sub: "Enjoy your meal!",          icon: "✅" },
+  ];
+
+  function fmtTime(ts) {
+    return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function render() {
+    const order = Order.current();
+
+    if (!order) {
+      pageEl.innerHTML = `
+        <div class="empty">
+          <div class="big">🧾</div>
+          <p>No active order yet.</p>
+          <a class="btn" href="menu.html" style="max-width:240px;margin:14px auto 0">Start Ordering</a>
+        </div>`;
+      return;
+    }
+
+    const curIdx = STEPS.findIndex(s => s.key === order.status);
+
+    // status pill text + eta
+    const etaText = {
+      pending:   "Waiting for the kitchen to accept…",
+      preparing: "Estimated 10–15 min",
+      ready:     "Please wait to be served 🎉",
+      completed: "Thank you for dining with us!",
+    }[order.status];
+
+    let timeline = "";
+    STEPS.forEach((s, i) => {
+      const done = i < curIdx;
+      const active = i === curIdx;
+      const at = order.history.find(h => h.status === s.key);
+      timeline += `
+        <li class="${done ? "done" : ""} ${active ? "active" : ""}">
+          <div class="dot">${done ? "✓" : s.icon}</div>
+          <div class="tl-info">
+            <strong>${s.label}</strong>
+            <span>${at ? fmtTime(at.at) + " · " : ""}${s.sub}</span>
+          </div>
+        </li>`;
+    });
+
+    let recap = "";
+    order.items.forEach(it => {
+      const meta = [it.variant ? it.variant.name : null, ...(it.addons||[]).map(a => "+"+a.name)].filter(Boolean).join(", ");
+      recap += `
+        <div class="recap-row">
+          <span><span class="q">${it.qty}×</span> ${it.name}${meta ? ` <span class="q">(${meta})</span>` : ""}</span>
+          <span>${formatRM(Cart.unitPrice(it) * it.qty)}</span>
+        </div>`;
+    });
+
+    pageEl.innerHTML = `
+      <div class="order-card">
+        <div class="order-no">Order Number</div>
+        <div class="order-id">#${order.id}</div>
+        <div class="status-pill ${order.status}">${STEPS[curIdx].label}</div>
+        <div class="eta">${etaText}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">
+          ${order.table !== "—" ? "Table " + order.table + " · " : ""}Placed at ${fmtTime(order.placedAt)}
+          ${order.customerName ? " · " + order.customerName : ""}
+        </div>
+      </div>
+
+      <ul class="timeline">${timeline}</ul>
+
+      <div style="height:16px"></div>
+
+      <div class="recap">
+        <h3>Order Summary</h3>
+        ${recap}
+        <div class="recap-row" style="margin-top:8px;border-top:1px dashed var(--line);padding-top:10px">
+          <span class="q">Subtotal</span><span>${formatRM(order.subtotal)}</span>
+        </div>
+        <div class="recap-row"><span class="q">SST</span><span>${formatRM(order.tax)}</span></div>
+        <div class="recap-row" style="font-weight:800"><span>Total</span><span>${formatRM(order.total)}</span></div>
+      </div>
+
+      <div style="height:18px"></div>
+      <a class="btn secondary" href="menu.html">＋ Add More Items</a>
+
+      ${order.status !== "completed" ? `
+        <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:18px">
+          This page updates automatically as the kitchen prepares your order.
+        </p>
+        ${order.remote ? "" : `<button class="btn ghost" id="simBtn" style="margin-top:10px">▶︎ Demo: advance status</button>`}
+      ` : `
+        <p style="text-align:center;color:var(--green);font-weight:700;margin-top:18px">Order completed ✅</p>
+      `}
+    `;
+
+    const sim = document.getElementById("simBtn");
+    if (sim) sim.addEventListener("click", () => { Order.advance(); render(); });
+  }
+
+  render();
+
+  /* ---- Live updates ----
+     Real orders (placed through the PHP backend) poll the server for the
+     status the kitchen/staff set. Standalone demo orders advance on their
+     own every 8s so the timeline is still visible without a backend. */
+  const _o = Order.current();
+  if (_o && _o.remote) {
+    const poll = setInterval(async () => {
+      const o = Order.current();
+      if (!o) { clearInterval(poll); return; }
+      try {
+        const r = await fetch("api/order_status.php?id=" + encodeURIComponent(o.id), { cache: "no-store" });
+        if (r.ok) {
+          const j = await r.json();
+          if (j && j.status && j.status !== o.status) {
+            o.status = j.status;
+            o.history.push({ status: j.status, at: Date.now() });
+            localStorage.setItem("sz_current_order", JSON.stringify(o));
+            render();
+          }
+          if (j && j.status === "completed") clearInterval(poll);
+        }
+      } catch (e) { /* keep trying */ }
+    }, 4000);
+  } else if (_o) {
+    const auto = setInterval(() => {
+      const o = Order.current();
+      if (!o || o.status === "completed") { clearInterval(auto); return; }
+      Order.advance();
+      render();
+    }, 8000);
+  }
+  </script>
+</body>
+</html>

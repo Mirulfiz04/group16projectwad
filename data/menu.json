@@ -1,0 +1,1784 @@
+{
+  "RESTAURANT": {
+    "name": "Sup Tulang ZZ",
+    "tagline": "Sup Tulang & Masakan Panas",
+    "since": "Since 1990's · Pasir Gudang",
+    "taxRate": 0.06,
+    "currency": "RM"
+  },
+  "CATEGORIES": [
+    {
+      "id": "signature",
+      "name": "Signature",
+      "emoji": "🔥"
+    },
+    {
+      "id": "sarapan",
+      "name": "Sarapan",
+      "emoji": "🍳"
+    },
+    {
+      "id": "roti",
+      "name": "Roti Canai",
+      "emoji": "🫓"
+    },
+    {
+      "id": "set",
+      "name": "Set Tengah Hari",
+      "emoji": "🍱"
+    },
+    {
+      "id": "ikan",
+      "name": "Menu Ikan",
+      "emoji": "🐟"
+    },
+    {
+      "id": "goreng",
+      "name": "Nasi & Mee Goreng",
+      "emoji": "🍜"
+    },
+    {
+      "id": "alacarte",
+      "name": "Ala-Carte",
+      "emoji": "🍲"
+    },
+    {
+      "id": "western",
+      "name": "Western",
+      "emoji": "🍔"
+    },
+    {
+      "id": "minuman",
+      "name": "Minuman",
+      "emoji": "🥤"
+    }
+  ],
+  "MENU": [
+    {
+      "id": "sig-gearbox",
+      "img": "images/sig-gearbox.jpg",
+      "cat": "signature",
+      "name": "Sup Gearbox Kambing",
+      "price": 19,
+      "emoji": "🍲",
+      "popular": true,
+      "desc": "The house special — rich mutton gearbox bone soup.",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        },
+        {
+          "name": "Set: Nasi Putih + Telur Dadar + Sambal + Ulaman",
+          "price": 5
+        },
+        {
+          "name": "Roti Francis / Roti Gardenia",
+          "price": 2.5
+        }
+      ]
+    },
+    {
+      "id": "sig-kambing",
+      "img": "images/sig-kambing.jpg",
+      "cat": "signature",
+      "name": "Sup Kambing",
+      "price": 20,
+      "emoji": "🍲",
+      "popular": true,
+      "desc": "Tender mutton in our signature spiced broth.",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        },
+        {
+          "name": "Roti Francis / Roti Gardenia",
+          "price": 2.5
+        }
+      ]
+    },
+    {
+      "id": "sig-daging",
+      "cat": "signature",
+      "name": "Sup Daging",
+      "price": 8,
+      "emoji": "🍲",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        },
+        {
+          "name": "Roti Francis / Roti Gardenia",
+          "price": 2.5
+        }
+      ]
+    },
+    {
+      "id": "sig-ayam",
+      "cat": "signature",
+      "name": "Sup Ayam",
+      "price": 7,
+      "emoji": "🍲",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        },
+        {
+          "name": "Roti Francis / Roti Gardenia",
+          "price": 2.5
+        }
+      ]
+    },
+    {
+      "id": "sig-mr-gearbox",
+      "img": "images/sig-mr-gearbox.jpg",
+      "cat": "signature",
+      "name": "Mee Rebus Gearbox Kambing",
+      "price": 20,
+      "emoji": "🍜",
+      "popular": true,
+      "desc": "Mee rebus topped with mutton gearbox."
+    },
+    {
+      "id": "sig-mr-daging",
+      "cat": "signature",
+      "name": "Mee Rebus Daging",
+      "price": 9.5,
+      "emoji": "🍜"
+    },
+    {
+      "id": "sig-mr-ayam",
+      "cat": "signature",
+      "name": "Mee Rebus Ayam",
+      "price": 9,
+      "emoji": "🍜"
+    },
+    {
+      "id": "sar-lontong-kuah",
+      "cat": "sarapan",
+      "name": "Lontong Kuah",
+      "price": 7.5,
+      "emoji": "🥥"
+    },
+    {
+      "id": "sar-lontong-kering",
+      "cat": "sarapan",
+      "name": "Lontong Kering",
+      "price": 9,
+      "emoji": "🥥",
+      "variants": [
+        {
+          "name": "Ayam",
+          "price": 9
+        },
+        {
+          "name": "Daging",
+          "price": 9.5
+        }
+      ]
+    },
+    {
+      "id": "sar-nl-basmathi",
+      "img": "images/sar-nl-basmathi.jpg",
+      "cat": "sarapan",
+      "name": "Nasi Lemak Basmathi",
+      "price": 6,
+      "emoji": "🍚",
+      "popular": true,
+      "variants": [
+        {
+          "name": "Telur",
+          "price": 6
+        },
+        {
+          "name": "Ayam",
+          "price": 9
+        }
+      ]
+    },
+    {
+      "id": "sar-nl-rendang",
+      "img": "images/sar-nl-rendang.jpg",
+      "cat": "sarapan",
+      "name": "Nasi Lemak Rendang",
+      "price": 8.5,
+      "emoji": "🍛",
+      "variants": [
+        {
+          "name": "Ayam",
+          "price": 8.5
+        },
+        {
+          "name": "Daging",
+          "price": 9.5
+        }
+      ]
+    },
+    {
+      "id": "sar-nasi-ayam",
+      "img": "images/sar-nasi-ayam.jpg",
+      "cat": "sarapan",
+      "name": "Nasi Ayam Basmathi",
+      "price": 12,
+      "emoji": "🍗"
+    },
+    {
+      "id": "sar-nasi-ambang",
+      "cat": "sarapan",
+      "name": "Nasi Ambang",
+      "price": 9.5,
+      "emoji": "🍚"
+    },
+    {
+      "id": "sar-bubur-nasi",
+      "cat": "sarapan",
+      "name": "Bubur Nasi",
+      "price": 7.5,
+      "emoji": "🥣"
+    },
+    {
+      "id": "sar-bubur-ayam",
+      "cat": "sarapan",
+      "name": "Bubur Ayam",
+      "price": 7,
+      "emoji": "🥣"
+    },
+    {
+      "id": "sar-laksa",
+      "img": "images/sar-laksa.jpg",
+      "cat": "sarapan",
+      "name": "Laksa",
+      "price": 7.5,
+      "emoji": "🍜",
+      "variants": [
+        {
+          "name": "Johor",
+          "price": 8
+        },
+        {
+          "name": "Penang",
+          "price": 7.5
+        }
+      ]
+    },
+    {
+      "id": "sar-bakso",
+      "cat": "sarapan",
+      "name": "Bakso",
+      "price": 7.5,
+      "emoji": "🍲",
+      "variants": [
+        {
+          "name": "Mee",
+          "price": 7.5
+        },
+        {
+          "name": "Mee Hoon",
+          "price": 7.5
+        },
+        {
+          "name": "Nasi",
+          "price": 7.5
+        }
+      ]
+    },
+    {
+      "id": "sar-soto",
+      "cat": "sarapan",
+      "name": "Soto",
+      "price": 8,
+      "emoji": "🍲",
+      "variants": [
+        {
+          "name": "Mee",
+          "price": 8
+        },
+        {
+          "name": "Mee Hoon",
+          "price": 8
+        },
+        {
+          "name": "Nasi",
+          "price": 8
+        }
+      ]
+    },
+    {
+      "id": "sar-roti-bakar",
+      "img": "images/sar-roti-bakar.jpg",
+      "cat": "sarapan",
+      "name": "Roti Bakar",
+      "price": 2.5,
+      "emoji": "🍞",
+      "addons": [
+        {
+          "name": "Telur 1/2 Masak",
+          "price": 3.5
+        }
+      ]
+    },
+    {
+      "id": "sar-roti-kaya",
+      "cat": "sarapan",
+      "name": "Roti Kaya",
+      "price": 3.5,
+      "emoji": "🍞",
+      "addons": [
+        {
+          "name": "Telur 1/2 Masak",
+          "price": 3.5
+        }
+      ]
+    },
+    {
+      "id": "sar-roti-garlic",
+      "cat": "sarapan",
+      "name": "Roti Garlic",
+      "price": 3.5,
+      "emoji": "🧄",
+      "addons": [
+        {
+          "name": "Telur 1/2 Masak",
+          "price": 3.5
+        }
+      ]
+    },
+    {
+      "id": "rc-kosong",
+      "img": "images/rc-kosong.jpg",
+      "cat": "roti",
+      "name": "Roti Kosong",
+      "price": 1.5,
+      "emoji": "🫓",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-kosong-bawang",
+      "cat": "roti",
+      "name": "Roti Kosong Bawang",
+      "price": 2,
+      "emoji": "🫓",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-tampal",
+      "cat": "roti",
+      "name": "Roti Tampal",
+      "price": 2.8,
+      "emoji": "🫓",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-telur",
+      "cat": "roti",
+      "name": "Roti Telur",
+      "price": 2.8,
+      "emoji": "🍳",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-telur-bawang",
+      "cat": "roti",
+      "name": "Roti Telur Bawang",
+      "price": 3.5,
+      "emoji": "🍳",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-double-jantan",
+      "img": "images/rc-double-jantan.jpg",
+      "cat": "roti",
+      "name": "Roti Telur Double Jantan",
+      "price": 5.5,
+      "emoji": "🍳",
+      "popular": true,
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-pisang",
+      "img": "images/rc-pisang.jpg",
+      "cat": "roti",
+      "name": "Roti Pisang",
+      "price": 4.5,
+      "emoji": "🍌",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-sardin",
+      "cat": "roti",
+      "name": "Roti Sardin",
+      "price": 6,
+      "emoji": "🐟",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-bom",
+      "cat": "roti",
+      "name": "Roti Bom",
+      "price": 2.5,
+      "emoji": "🫓",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-planta",
+      "cat": "roti",
+      "name": "Roti Planta",
+      "price": 3,
+      "emoji": "🫓",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "rc-sarang",
+      "cat": "roti",
+      "name": "Roti Sarang Burung Daging",
+      "price": 8,
+      "emoji": "🫓",
+      "desc": "Available 7–11am & 6–11pm."
+    },
+    {
+      "id": "set-bawal",
+      "cat": "set",
+      "name": "Nasi Bawal Goreng Berlado",
+      "price": 9,
+      "emoji": "🐟"
+    },
+    {
+      "id": "set-siakap",
+      "img": "images/set-siakap.jpg",
+      "cat": "set",
+      "name": "Nasi Siakap Goreng Berlado",
+      "price": 15,
+      "emoji": "🐟",
+      "popular": true
+    },
+    {
+      "id": "set-keli",
+      "cat": "set",
+      "name": "Nasi Keli Goreng Berlado",
+      "price": 10.9,
+      "emoji": "🐟"
+    },
+    {
+      "id": "set-ayam",
+      "cat": "set",
+      "name": "Nasi Ayam Goreng Berlado",
+      "price": 8.5,
+      "emoji": "🍗"
+    },
+    {
+      "id": "ikan-tiga-rasa",
+      "img": "images/ikan-tiga-rasa.jpg",
+      "cat": "ikan",
+      "name": "Siakap Tiga Rasa",
+      "price": 38,
+      "emoji": "🐟",
+      "popular": true,
+      "desc": "Whole siakap. Market price RM35–40."
+    },
+    {
+      "id": "ikan-masam-manis",
+      "cat": "ikan",
+      "name": "Siakap Masam Manis",
+      "price": 38,
+      "emoji": "🐟",
+      "desc": "Whole siakap. Market price RM35–40."
+    },
+    {
+      "id": "ikan-steam-lemon",
+      "cat": "ikan",
+      "name": "Siakap Steam Lemon",
+      "price": 38,
+      "emoji": "🐟",
+      "desc": "Whole siakap. Market price RM35–40."
+    },
+    {
+      "id": "ikan-laprik",
+      "cat": "ikan",
+      "name": "Siakap Laprik",
+      "price": 38,
+      "emoji": "🐟",
+      "desc": "Whole siakap. Market price RM35–40."
+    },
+    {
+      "id": "ikan-goreng-kunyit",
+      "cat": "ikan",
+      "name": "Siakap Goreng Kunyit",
+      "price": 38,
+      "emoji": "🐟",
+      "desc": "Whole siakap. Market price RM35–40."
+    },
+    {
+      "id": "ikan-siakap-bakar",
+      "cat": "ikan",
+      "name": "Siakap Bakar",
+      "price": 38,
+      "emoji": "🔥",
+      "desc": "Grilled whole siakap. Market price RM35–40."
+    },
+    {
+      "id": "ikan-caru-bakar",
+      "cat": "ikan",
+      "name": "Caru Bakar",
+      "price": 12,
+      "emoji": "🔥",
+      "desc": "Market price RM8–15."
+    },
+    {
+      "id": "ikan-kerang-bakar",
+      "cat": "ikan",
+      "name": "Kerang Bakar",
+      "price": 15,
+      "emoji": "🦪"
+    },
+    {
+      "id": "ikan-sotong-bakar",
+      "img": "images/ikan-sotong-bakar.jpg",
+      "cat": "ikan",
+      "name": "Sotong Bakar",
+      "price": 15,
+      "emoji": "🦑"
+    },
+    {
+      "id": "ng-biasa",
+      "cat": "goreng",
+      "name": "Nasi Goreng Biasa",
+      "price": 7.5,
+      "emoji": "🍚",
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ng-kampung",
+      "img": "images/ng-kampung.jpg",
+      "cat": "goreng",
+      "name": "Nasi Goreng Kampung",
+      "price": 8,
+      "emoji": "🍚",
+      "popular": true,
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ng-cina",
+      "cat": "goreng",
+      "name": "Nasi Goreng Cina",
+      "price": 7.5,
+      "emoji": "🍚",
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ng-ikan-masin",
+      "cat": "goreng",
+      "name": "Nasi Goreng Ikan Masin",
+      "price": 8.5,
+      "emoji": "🍚",
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ng-cili-padi",
+      "cat": "goreng",
+      "name": "Nasi Goreng Cili Padi",
+      "price": 8.5,
+      "emoji": "🌶️",
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ng-pattaya",
+      "cat": "goreng",
+      "name": "Nasi Goreng Pattaya",
+      "price": 8.5,
+      "emoji": "🍳",
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ng-tomyam",
+      "cat": "goreng",
+      "name": "Nasi Goreng Tom Yam",
+      "price": 9,
+      "emoji": "🌶️",
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ng-belacan",
+      "cat": "goreng",
+      "name": "Nasi Goreng Belacan",
+      "price": 12,
+      "emoji": "🍚",
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "mg-mee",
+      "cat": "goreng",
+      "name": "Mee Goreng",
+      "price": 7.5,
+      "emoji": "🍜",
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "mg-singapore",
+      "cat": "goreng",
+      "name": "Mee Hoon Goreng Singapore",
+      "price": 7.5,
+      "emoji": "🍜",
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "mg-ckt",
+      "img": "images/mg-ckt.jpg",
+      "cat": "goreng",
+      "name": "Char Kuey Teow",
+      "price": 8,
+      "emoji": "🍜",
+      "popular": true,
+      "addons": [
+        {
+          "name": "Daging",
+          "price": 1
+        },
+        {
+          "name": "Udang",
+          "price": 3
+        },
+        {
+          "name": "Sotong",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-sup-ayam-thai",
+      "cat": "alacarte",
+      "name": "Sup Ayam Ala Thai",
+      "price": 8,
+      "emoji": "🍲",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "ac-sup-daging-thai",
+      "cat": "alacarte",
+      "name": "Sup Daging Ala Thai",
+      "price": 9,
+      "emoji": "🍲",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "ac-ty-ayam",
+      "img": "images/ac-ty-ayam.jpg",
+      "cat": "alacarte",
+      "name": "Tom Yam Ayam",
+      "price": 8,
+      "emoji": "🌶️",
+      "popular": true,
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "ac-ty-daging",
+      "cat": "alacarte",
+      "name": "Tom Yam Daging",
+      "price": 9,
+      "emoji": "🌶️",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "ac-ty-ayam-daging",
+      "cat": "alacarte",
+      "name": "Tom Yam Ayam + Daging",
+      "price": 12,
+      "emoji": "🌶️",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "ac-ty-seafood",
+      "cat": "alacarte",
+      "name": "Tom Yam Seafood",
+      "price": 13,
+      "emoji": "🦐",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "ac-ty-campur",
+      "cat": "alacarte",
+      "name": "Tom Yam Campur",
+      "price": 13,
+      "emoji": "🌶️",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "ac-ty-sayur",
+      "cat": "alacarte",
+      "name": "Tom Yam Sayur",
+      "price": 8,
+      "emoji": "🥬",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "ac-ty-cendawan",
+      "cat": "alacarte",
+      "name": "Tom Yam Cendawan",
+      "price": 8,
+      "emoji": "🍄",
+      "addons": [
+        {
+          "name": "Mee / Mee Hoon / Kuey Teow",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "ac-mee-bandung",
+      "img": "images/ac-mee-bandung.jpg",
+      "cat": "alacarte",
+      "name": "Mee Bandung",
+      "price": 10.5,
+      "emoji": "🍜",
+      "variants": [
+        {
+          "name": "Mee",
+          "price": 10.5
+        },
+        {
+          "name": "Mee Hoon",
+          "price": 10.5
+        },
+        {
+          "name": "Kuey Teow",
+          "price": 10.5
+        }
+      ]
+    },
+    {
+      "id": "ac-mee-hongkong",
+      "cat": "alacarte",
+      "name": "Mee Hong Kong",
+      "price": 10.5,
+      "emoji": "🍜",
+      "variants": [
+        {
+          "name": "Mee",
+          "price": 10.5
+        },
+        {
+          "name": "Mee Hoon",
+          "price": 10.5
+        },
+        {
+          "name": "Kuey Teow",
+          "price": 10.5
+        }
+      ]
+    },
+    {
+      "id": "ac-mee-hailam",
+      "cat": "alacarte",
+      "name": "Mee Hailam",
+      "price": 10.5,
+      "emoji": "🍜",
+      "variants": [
+        {
+          "name": "Mee",
+          "price": 10.5
+        },
+        {
+          "name": "Mee Hoon",
+          "price": 10.5
+        },
+        {
+          "name": "Kuey Teow",
+          "price": 10.5
+        }
+      ]
+    },
+    {
+      "id": "ac-mee-kungfu",
+      "cat": "alacarte",
+      "name": "Mee Kung Fu",
+      "price": 10.5,
+      "emoji": "🍜",
+      "variants": [
+        {
+          "name": "Mee",
+          "price": 10.5
+        },
+        {
+          "name": "Mee Hoon",
+          "price": 10.5
+        },
+        {
+          "name": "Kuey Teow",
+          "price": 10.5
+        }
+      ]
+    },
+    {
+      "id": "ac-kailan",
+      "cat": "alacarte",
+      "name": "Kailan",
+      "price": 7,
+      "emoji": "🥬",
+      "variants": [
+        {
+          "name": "Biasa",
+          "price": 7
+        },
+        {
+          "name": "Ikan Masin",
+          "price": 7
+        }
+      ]
+    },
+    {
+      "id": "ac-kangkung",
+      "cat": "alacarte",
+      "name": "Kangkung",
+      "price": 7,
+      "emoji": "🥬",
+      "variants": [
+        {
+          "name": "Biasa",
+          "price": 7
+        },
+        {
+          "name": "Belacan",
+          "price": 7
+        }
+      ]
+    },
+    {
+      "id": "ac-taugeh",
+      "cat": "alacarte",
+      "name": "Taugeh",
+      "price": 7,
+      "emoji": "🌱",
+      "variants": [
+        {
+          "name": "Biasa",
+          "price": 7
+        },
+        {
+          "name": "Ikan Masin",
+          "price": 7
+        }
+      ]
+    },
+    {
+      "id": "ac-sawi",
+      "cat": "alacarte",
+      "name": "Sawi",
+      "price": 7,
+      "emoji": "🥬",
+      "variants": [
+        {
+          "name": "Biasa",
+          "price": 7
+        },
+        {
+          "name": "Ikan Masin",
+          "price": 7
+        }
+      ]
+    },
+    {
+      "id": "ac-cendawan-goreng",
+      "cat": "alacarte",
+      "name": "Cendawan Goreng Biasa",
+      "price": 7,
+      "emoji": "🍄"
+    },
+    {
+      "id": "ac-ayam-bp",
+      "cat": "alacarte",
+      "name": "Ayam Black Pepper",
+      "price": 7.5,
+      "emoji": "🍗",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-daging-bp",
+      "cat": "alacarte",
+      "name": "Daging Black Pepper",
+      "price": 8.5,
+      "emoji": "🥩",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-sotong-bp",
+      "cat": "alacarte",
+      "name": "Sotong Black Pepper",
+      "price": 9.5,
+      "emoji": "🦑",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-ayam-sambal",
+      "cat": "alacarte",
+      "name": "Ayam Sambal",
+      "price": 7.5,
+      "emoji": "🍗",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-daging-sambal",
+      "cat": "alacarte",
+      "name": "Daging Sambal",
+      "price": 8.5,
+      "emoji": "🥩",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-sotong-sambal",
+      "cat": "alacarte",
+      "name": "Sotong Sambal",
+      "price": 9.5,
+      "emoji": "🦑",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-ayam-paprik",
+      "cat": "alacarte",
+      "name": "Ayam Paprik",
+      "price": 7.5,
+      "emoji": "🍗",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-daging-paprik",
+      "cat": "alacarte",
+      "name": "Daging Paprik",
+      "price": 8.5,
+      "emoji": "🥩",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-sotong-paprik",
+      "cat": "alacarte",
+      "name": "Sotong Paprik",
+      "price": 9.5,
+      "emoji": "🦑",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-ayam-kunyit",
+      "cat": "alacarte",
+      "name": "Ayam Kunyit",
+      "price": 7.5,
+      "emoji": "🍗",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-daging-kunyit",
+      "cat": "alacarte",
+      "name": "Daging Kunyit",
+      "price": 9.5,
+      "emoji": "🥩",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-sotong-kunyit",
+      "cat": "alacarte",
+      "name": "Sotong Kunyit",
+      "price": 9.5,
+      "emoji": "🦑",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-udang-kunyit",
+      "cat": "alacarte",
+      "name": "Udang Kunyit",
+      "price": 9.5,
+      "emoji": "🦐",
+      "addons": [
+        {
+          "name": "Nasi Putih",
+          "price": 2
+        },
+        {
+          "name": "Nasi Goreng",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "ac-gt-sotong",
+      "cat": "alacarte",
+      "name": "Sotong Goreng Tepung",
+      "price": 10.5,
+      "emoji": "🦑"
+    },
+    {
+      "id": "ac-gt-udang",
+      "cat": "alacarte",
+      "name": "Udang Goreng Tepung",
+      "price": 10.5,
+      "emoji": "🦐"
+    },
+    {
+      "id": "ac-gt-cendawan",
+      "cat": "alacarte",
+      "name": "Cendawan Goreng Tepung",
+      "price": 7,
+      "emoji": "🍄"
+    },
+    {
+      "id": "ac-gt-inokki",
+      "cat": "alacarte",
+      "name": "Inokki Goreng Tepung",
+      "price": 7,
+      "emoji": "🍄"
+    },
+    {
+      "id": "w-chicken-chop",
+      "img": "images/w-chicken-chop.jpg",
+      "cat": "western",
+      "name": "Chicken Chop",
+      "price": 18.5,
+      "emoji": "🍗",
+      "popular": true,
+      "variants": [
+        {
+          "name": "Fried",
+          "price": 18.5
+        },
+        {
+          "name": "Grill",
+          "price": 18.5
+        }
+      ]
+    },
+    {
+      "id": "w-fish-chips",
+      "cat": "western",
+      "name": "Fish N Chips",
+      "price": 16.5,
+      "emoji": "🍟"
+    },
+    {
+      "id": "w-lamb-chop",
+      "cat": "western",
+      "name": "Lamb Chop",
+      "price": 30.9,
+      "emoji": "🍖"
+    },
+    {
+      "id": "w-aglio",
+      "img": "images/w-aglio.jpg",
+      "cat": "western",
+      "name": "Spaghetti Aglio Olio",
+      "price": 13,
+      "emoji": "🍝",
+      "variants": [
+        {
+          "name": "Chicken",
+          "price": 13
+        },
+        {
+          "name": "Beef Bacon",
+          "price": 15
+        },
+        {
+          "name": "Seafood",
+          "price": 17
+        }
+      ]
+    },
+    {
+      "id": "w-carbonara",
+      "cat": "western",
+      "name": "Spaghetti Carbonara",
+      "price": 14,
+      "emoji": "🍝",
+      "variants": [
+        {
+          "name": "Chicken",
+          "price": 14
+        },
+        {
+          "name": "Beef Bacon",
+          "price": 16
+        },
+        {
+          "name": "Seafood",
+          "price": 18
+        }
+      ]
+    },
+    {
+      "id": "w-bolognese",
+      "cat": "western",
+      "name": "Spaghetti Bolognese",
+      "price": 15,
+      "emoji": "🍝"
+    },
+    {
+      "id": "w-smash-beef",
+      "img": "images/w-smash-beef.jpg",
+      "cat": "western",
+      "name": "Smash Beef Burger",
+      "price": 8,
+      "emoji": "🍔",
+      "popular": true,
+      "variants": [
+        {
+          "name": "Single",
+          "price": 8
+        },
+        {
+          "name": "Double",
+          "price": 10
+        }
+      ],
+      "addons": [
+        {
+          "name": "Fries",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "w-crispy-chicken",
+      "cat": "western",
+      "name": "Crispy Chicken Burger",
+      "price": 7.5,
+      "emoji": "🍔",
+      "addons": [
+        {
+          "name": "Fries",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "w-fries",
+      "img": "images/w-fries.jpg",
+      "cat": "western",
+      "name": "Fries",
+      "price": 7.5,
+      "emoji": "🍟"
+    },
+    {
+      "id": "w-nugget",
+      "cat": "western",
+      "name": "Nugget (8pcs)",
+      "price": 8,
+      "emoji": "🍗"
+    },
+    {
+      "id": "w-wedges",
+      "cat": "western",
+      "name": "Cheesy Wedges",
+      "price": 8.5,
+      "emoji": "🧀"
+    },
+    {
+      "id": "d-teh-o",
+      "cat": "minuman",
+      "name": "Teh O'",
+      "price": 2.3,
+      "emoji": "🍵",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 2.3
+        },
+        {
+          "name": "Cold",
+          "price": 2.5
+        }
+      ]
+    },
+    {
+      "id": "d-teh-tarik",
+      "img": "images/d-teh-tarik.jpg",
+      "cat": "minuman",
+      "name": "Teh Tarik",
+      "price": 2.5,
+      "emoji": "🍵",
+      "popular": true,
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 2.5
+        },
+        {
+          "name": "Cold",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "d-teh-halia",
+      "cat": "minuman",
+      "name": "Teh Halia",
+      "price": 3.5,
+      "emoji": "🍵",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 3.5
+        },
+        {
+          "name": "Cold",
+          "price": 4
+        }
+      ]
+    },
+    {
+      "id": "d-teh-sarbat",
+      "cat": "minuman",
+      "name": "Teh Sarbat",
+      "price": 3.5,
+      "emoji": "🍵",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 3.5
+        },
+        {
+          "name": "Cold",
+          "price": 4
+        }
+      ]
+    },
+    {
+      "id": "d-sirap",
+      "cat": "minuman",
+      "name": "Sirap",
+      "price": 2,
+      "emoji": "🥤",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 2
+        },
+        {
+          "name": "Cold",
+          "price": 2.5
+        }
+      ]
+    },
+    {
+      "id": "d-sirap-selasih",
+      "cat": "minuman",
+      "name": "Sirap Selasih",
+      "price": 2.5,
+      "emoji": "🥤",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 2.5
+        },
+        {
+          "name": "Cold",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "d-sirap-limau",
+      "cat": "minuman",
+      "name": "Sirap Limau",
+      "price": 2.7,
+      "emoji": "🥤",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 2.7
+        },
+        {
+          "name": "Cold",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "d-sirap-laici",
+      "cat": "minuman",
+      "name": "Sirap Laici",
+      "price": 5,
+      "emoji": "🥤",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 5
+        },
+        {
+          "name": "Cold",
+          "price": 5.5
+        }
+      ]
+    },
+    {
+      "id": "d-sirap-bandung",
+      "cat": "minuman",
+      "name": "Sirap Bandung",
+      "price": 3.5,
+      "emoji": "🥤",
+      "desc": "Cold only."
+    },
+    {
+      "id": "d-bandung-cincau",
+      "cat": "minuman",
+      "name": "Sirap Bandung Cincau",
+      "price": 4,
+      "emoji": "🥤",
+      "desc": "Cold only."
+    },
+    {
+      "id": "d-bandung-soda",
+      "cat": "minuman",
+      "name": "Sirap Bandung Soda",
+      "price": 4,
+      "emoji": "🥤",
+      "desc": "Cold only."
+    },
+    {
+      "id": "d-limau",
+      "cat": "minuman",
+      "name": "Limau",
+      "price": 2.7,
+      "emoji": "🍋",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 2.7
+        },
+        {
+          "name": "Cold",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "d-asam-boy",
+      "cat": "minuman",
+      "name": "Asam Boy",
+      "price": 2.7,
+      "emoji": "🥤",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 2.7
+        },
+        {
+          "name": "Cold",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "d-extra-joss",
+      "cat": "minuman",
+      "name": "Extra Joss Susu (Anggur/Mangga)",
+      "price": 4,
+      "emoji": "🥤",
+      "desc": "Cold only."
+    },
+    {
+      "id": "d-vico",
+      "cat": "minuman",
+      "name": "Vico",
+      "price": 3,
+      "emoji": "🍫",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 3
+        },
+        {
+          "name": "Cold",
+          "price": 3.5
+        }
+      ]
+    },
+    {
+      "id": "d-jus-orange",
+      "img": "images/d-jus-orange.jpg",
+      "cat": "minuman",
+      "name": "Jus Orange",
+      "price": 4.7,
+      "emoji": "🍊",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 4.7
+        },
+        {
+          "name": "Cold",
+          "price": 5
+        }
+      ]
+    },
+    {
+      "id": "d-jus-apple",
+      "cat": "minuman",
+      "name": "Jus Apple",
+      "price": 4.7,
+      "emoji": "🍎",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 4.7
+        },
+        {
+          "name": "Cold",
+          "price": 5
+        }
+      ]
+    },
+    {
+      "id": "d-jus-watermelon",
+      "cat": "minuman",
+      "name": "Jus Watermelon",
+      "price": 4.7,
+      "emoji": "🍉",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 4.7
+        },
+        {
+          "name": "Cold",
+          "price": 5
+        }
+      ]
+    },
+    {
+      "id": "d-jus-lychee",
+      "cat": "minuman",
+      "name": "Jus Lychee",
+      "price": 4.7,
+      "emoji": "🥤",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 4.7
+        },
+        {
+          "name": "Cold",
+          "price": 5
+        }
+      ]
+    },
+    {
+      "id": "d-jus-lemon",
+      "cat": "minuman",
+      "name": "Jus Lemon",
+      "price": 4.7,
+      "emoji": "🍋",
+      "variants": [
+        {
+          "name": "Hot",
+          "price": 4.7
+        },
+        {
+          "name": "Cold",
+          "price": 5
+        }
+      ]
+    },
+    {
+      "id": "d-cikong",
+      "cat": "minuman",
+      "name": "Cikong",
+      "price": 6,
+      "emoji": "🍧",
+      "desc": "Cold dessert."
+    },
+    {
+      "id": "d-ais-jelly",
+      "cat": "minuman",
+      "name": "Ais Jelly Limau",
+      "price": 6,
+      "emoji": "🍧",
+      "desc": "Cold dessert."
+    },
+    {
+      "id": "d-cendol",
+      "img": "images/d-cendol.jpg",
+      "cat": "minuman",
+      "name": "Cendol",
+      "price": 6,
+      "emoji": "🍧",
+      "popular": true,
+      "desc": "Cold dessert."
+    }
+  ]
+}

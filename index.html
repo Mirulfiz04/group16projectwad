@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d6342b" />
+  <title>Sup Tulang ZZ — Welcome</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Landing page shown right after the customer scans the table QR code.
+         The QR code should encode a URL like:  index.html?table=7         -->
+    <section class="hero">
+      <div class="logo-badge">🍲</div>
+      <div class="since">Since 1990's</div>
+      <h1>SUP TULANG ZZ</h1>
+      <p class="tagline">Sup Tulang &amp; Masakan Panas · Pasir Gudang</p>
+      <div class="table-pill">🍽️ <span id="tableLabel">Table —</span></div>
+    </section>
+
+    <div class="landing-body">
+      <ol class="steps">
+        <li><span class="num">1</span><div><strong>Browse the menu</strong><span>Tap any dish to see details &amp; options.</span></div></li>
+        <li><span class="num">2</span><div><strong>Add to cart</strong><span>Pick your add-ons, quantity and notes.</span></div></li>
+        <li><span class="num">3</span><div><strong>Place your order</strong><span>We'll send it straight to the kitchen.</span></div></li>
+        <li><span class="num">4</span><div><strong>Track it live</strong><span>Follow your order from pending to ready.</span></div></li>
+      </ol>
+
+      <a class="btn" href="menu.html">View Menu &nbsp;→</a>
+      <div style="height:10px"></div>
+      <a class="btn secondary" href="cart.html">View My Cart</a>
+
+      <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:24px">
+        Dine-in self-ordering · No app download needed
+      </p>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    // Read the table number from the QR code URL (?table=7) and remember it.
+    const params = new URLSearchParams(location.search);
+    const table = params.get("table");
+    if (table) Table.set(table);
+    const t = Table.get();
+    document.getElementById("tableLabel").textContent = t ? ("Table " + t) : "Walk-in";
+  </script>
+</body>
+</html>

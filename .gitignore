@@ -1,0 +1,14 @@
+# Auto-generated database (recreated on first run) — don't commit
+backend/data.sqlite
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Logs & temp
+*.log
+_nettest.jpg
+
+# Dependencies (none yet, but safe to keep)
+node_modules/

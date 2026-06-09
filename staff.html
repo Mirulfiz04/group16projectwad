@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kitchen / Staff — Sup Tulang ZZ</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Staff view is wider than the customer phone view */
+    .app { max-width: 760px; }
+    .staff-grid { display: grid; gap: 12px; }
+    .ord { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+    .ord .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .ord .oid { font-weight: 800; color: var(--red); }
+    .ord .lines { margin: 8px 0; font-size: 14px; }
+    .ord .lines li { margin: 2px 0; }
+    .ord .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .ord .acts button { flex: 1; min-width: 110px; padding: 10px; border-radius: 10px; font-weight: 700; border: 1px solid var(--line); background: #fff; }
+    .ord .acts button.on { background: var(--red); color: #fff; border-color: var(--red); }
+    .muted2 { color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="back" href="index.html">←</a>
+      <div class="title">Kitchen / Staff <small>Live orders</small></div>
+      <span class="muted2" id="clock" style="color:#fff"></span>
+    </header>
+    <main class="page">
+      <div class="note-banner" style="margin:0 0 12px">
+        👨‍🍳 Bonus helper for the group demo (the staff/online side is your teammates' part).
+        Tap a status to update it — the customer's tracking page updates automatically.
+      </div>
+      <div class="staff-grid" id="grid"><p class="muted2">Loading…</p></div>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+  const STATUSES = ["pending", "preparing", "ready", "completed"];
+  const LABEL = { pending: "Pending", preparing: "Preparing", ready: "Ready", completed: "Completed" };
+  const grid = document.getElementById("grid");
+
+  function lineText(it) {
+    const extra = [it.variant_name, it.addons_text].filter(Boolean).join(", ");
+    return `${it.qty}× ${it.name}${extra ? " (" + extra + ")" : ""}${it.notes ? " — “" + it.notes + "”" : ""}`;
+  }
+
+  async function load() {
+    let orders = [];
+    try {
+      const r = await fetch("api/orders.php", { cache: "no-store" });
+      if (!r.ok) throw 0;
+      orders = await r.json();
+    } catch (e) {
+      grid.innerHTML = `<div class="note-banner">⚠️ Can't reach the backend. Serve the project with PHP/XAMPP (not by double-clicking the file) to use the staff view. See README.</div>`;
+      return;
+    }
+    if (!orders.length) { grid.innerHTML = `<p class="muted2">No orders yet. Place one from the customer app.</p>`; return; }
+
+    grid.innerHTML = orders.map(o => `
+      <div class="ord">
+        <div class="top">
+          <span class="oid">#${o.id}</span>
+          <span class="status-pill ${o.status}">${LABEL[o.status]}</span>
+        </div>
+        <div class="muted2">${o.table_no ? "Table " + o.table_no : "Walk-in"}${o.customer_name ? " · " + o.customer_name : ""} · ${o.created_at || ""}</div>
+        <ul class="lines">${o.items.map(it => `<li>${lineText(it)}</li>`).join("")}</ul>
+        ${o.note ? `<div class="muted2">Note: ${o.note}</div>` : ""}
+        <div style="font-weight:800;margin-top:6px">${formatRM(o.total)}</div>
+        <div class="acts">
+          ${STATUSES.map(s => `<button class="${s === o.status ? "on" : ""}" data-id="${o.id}" data-s="${s}">${LABEL[s]}</button>`).join("")}
+        </div>
+      </div>`).join("");
+  }
+
+  grid.addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-s]");
+    if (!b) return;
+    b.disabled = true;
+    try {
+      await fetch("api/order_status.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: b.dataset.id, status: b.dataset.s }),
+      });
+    } catch (e) {}
+    load();
+  });
+
+  function tick() { document.getElementById("clock").textContent = new Date().toLocaleTimeString(); }
+  setInterval(tick, 1000); tick();
+  load();
+  setInterval(load, 5000);   // auto-refresh the board
+  </script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d6342b" />
+  <title>Menu — Sup Tulang ZZ</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <a class="back" href="index.html">←</a>
+      <div class="title">Menu <small id="tableSmall">Table —</small></div>
+      <a class="cart-link" href="cart.html">🛒<span class="cart-badge">0</span></a>
+    </header>
+
+    <!-- Search -->
+    <div class="search-wrap">
+      <input class="search" id="search" type="search" placeholder="Search for a dish… e.g. tom yam" />
+    </div>
+
+    <!-- Category tabs -->
+    <nav class="cats" id="cats"></nav>
+
+    <!-- Menu list -->
+    <main class="menu" id="menu"></main>
+
+    <!-- Floating "view cart" bar -->
+    <div class="cartbar hidden" id="cartbar">
+      <a class="inner" href="cart.html">
+        <span><span class="count" id="cartbarCount">0</span> View Cart</span>
+        <span id="cartbarTotal">RM 0.00</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ================= Food Details Modal (bottom sheet) ================= -->
+  <div class="sheet-overlay" id="overlay">
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true">
+      <div class="sheet-hero" id="sheetHero">
+        <span id="sheetEmoji">🍲</span>
+        <button class="close" id="sheetClose" aria-label="Close">✕</button>
+      </div>
+      <div class="sheet-body">
+        <h2 id="sheetName">Dish</h2>
+        <p class="sheet-desc" id="sheetDesc"></p>
+        <div class="sheet-price" id="sheetBasePrice">RM 0.00</div>
+
+        <!-- Variants (required, radio) -->
+        <div class="opt-group" id="variantGroup" style="display:none">
+          <h3>Choose one <span class="req" id="variantReq">Required</span></h3>
+          <div id="variantList"></div>
+        </div>
+
+        <!-- Add-ons (optional, checkbox) -->
+        <div class="opt-group" id="addonGroup" style="display:none">
+          <h3>Add-ons <span style="color:var(--muted);font-weight:500;font-size:12px">(optional)</span></h3>
+          <div id="addonList"></div>
+        </div>
+
+        <!-- Notes -->
+        <div class="opt-group">
+          <h3>Special request</h3>
+          <textarea class="notes-input" id="notes" rows="2" placeholder="e.g. less spicy, no onion…"></textarea>
+        </div>
+
+        <!-- Quantity -->
+        <div class="opt-group">
+          <h3>Quantity</h3>
+          <div class="qty">
+            <button id="qMinus" aria-label="Decrease">−</button>
+            <span class="val" id="qVal">1</span>
+            <button id="qPlus" aria-label="Increase">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer">
+        <button class="btn" id="addBtn">Add to Cart · <span id="addTotal">RM 0.00</span></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+  /* ===================== Menu page logic ===================== */
+  document.getElementById("tableSmall").textContent = Table.get() ? ("Table " + Table.get()) : "Walk-in";
+
+  const menuEl   = document.getElementById("menu");
+  const catsEl   = document.getElementById("cats");
+  const searchEl = document.getElementById("search");
+  let activeCat  = "all";
+  let query      = "";
+
+  /* ---- Category chips ---- */
+  function renderCats() {
+    const chips = [`<button class="cat-chip ${activeCat==='all'?'active':''}" data-cat="all">All</button>`];
+    CATEGORIES.forEach(c => {
+      chips.push(`<button class="cat-chip ${activeCat===c.id?'active':''}" data-cat="${c.id}">${c.emoji} ${c.name}</button>`);
+    });
+    catsEl.innerHTML = chips.join("");
+  }
+
+  /* ---- Menu list (grouped by category, filtered by search) ---- */
+  function renderMenu() {
+    const q = query.trim().toLowerCase();
+    let html = "";
+    const cats = activeCat === "all" ? CATEGORIES : CATEGORIES.filter(c => c.id === activeCat);
+
+    let shown = 0;
+    cats.forEach(cat => {
+      let items = MENU.filter(m => m.cat === cat.id);
+      if (q) items = items.filter(m => m.name.toLowerCase().includes(q) || (m.desc||"").toLowerCase().includes(q));
+      if (!items.length) return;
+      shown += items.length;
+      html += `<h2 class="cat-heading">${cat.emoji} ${cat.name}</h2>`;
+      items.forEach(m => {
+        const hasOptions = (m.variants && m.variants.length) || (m.addons && m.addons.length);
+        const optNote = m.variants ? "Choose option" : (m.addons ? "Add-ons available" : "");
+        html += `
+          <div class="food" data-id="${m.id}">
+            <div class="thumb">${thumbHTML(m.img, m.emoji)}</div>
+            <div class="info">
+              <div class="name">${m.name} ${m.popular ? '<span class="badge-pop">Popular</span>' : ''}</div>
+              ${m.desc ? `<div class="desc">${m.desc}</div>` : ""}
+              ${optNote ? `<div class="opt-note">${optNote}</div>` : ""}
+              <div class="price">${m.variants ? "from " : ""}${formatRM(m.price)}</div>
+            </div>
+            <button class="add" data-id="${m.id}" aria-label="Add ${m.name}">+</button>
+          </div>`;
+      });
+    });
+
+    if (!shown) {
+      html = `<div class="empty"><div class="big">🔍</div>No dishes found${q ? ` for “${query}”` : ""}.</div>`;
+    }
+    menuEl.innerHTML = html;
+  }
+
+  /* ---- Events: open modal on card, quick-add on + ---- */
+  menuEl.addEventListener("click", (e) => {
+    const addBtn = e.target.closest(".add");
+    if (addBtn) { e.stopPropagation(); quickOrOpen(addBtn.dataset.id); return; }
+    const card = e.target.closest(".food");
+    if (card) openSheet(card.dataset.id);
+  });
+  catsEl.addEventListener("click", (e) => {
+    const chip = e.target.closest(".cat-chip");
+    if (!chip) return;
+    activeCat = chip.dataset.cat;
+    renderCats(); renderMenu();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  searchEl.addEventListener("input", () => { query = searchEl.value; renderMenu(); });
+
+  /* If an item has no options, the + button adds it straight away.
+     Otherwise it opens the modal so the customer can choose. */
+  function quickOrOpen(id) {
+    const m = MENU.find(x => x.id === id);
+    if ((m.variants && m.variants.length)) { openSheet(id); return; }
+    Cart.add({
+      id: m.id, name: m.name, emoji: m.emoji, img: m.img || null,
+      basePrice: m.price, variant: null, addons: [], notes: "", qty: 1,
+    });
+    toast(`${m.name} added`);
+    updateCartbar();
+  }
+
+  /* ===================== Modal logic ===================== */
+  const overlay = document.getElementById("overlay");
+  let current = null;     // the menu item being configured
+  let qty = 1;
+  let chosenVariant = null;
+  let chosenAddons = [];
+
+  function openSheet(id) {
+    current = MENU.find(x => x.id === id);
+    qty = 1; chosenVariant = null; chosenAddons = [];
+
+    document.getElementById("sheetEmoji").textContent = current.emoji || "🍽️";
+    const hero = document.getElementById("sheetHero");
+    if (current.img) { hero.style.backgroundImage = `url('${current.img}')`; hero.classList.add("has-img"); }
+    else { hero.style.backgroundImage = ""; hero.classList.remove("has-img"); }
+    document.getElementById("sheetName").textContent  = current.name;
+    document.getElementById("sheetDesc").textContent  = current.desc || "";
+    document.getElementById("sheetDesc").style.display = current.desc ? "block" : "none";
+    document.getElementById("sheetBasePrice").textContent = (current.variants ? "from " : "") + formatRM(current.price);
+    document.getElementById("notes").value = "";
+    document.getElementById("qVal").textContent = qty;
+
+    // Variants
+    const vGroup = document.getElementById("variantGroup");
+    if (current.variants && current.variants.length) {
+      vGroup.style.display = "block";
+      document.getElementById("variantList").innerHTML = current.variants.map((v, i) => `
+        <label class="opt" data-vi="${i}">
+          <input type="radio" name="variant" value="${i}">
+          <span class="opt-name">${v.name}</span>
+          <span class="opt-price">${formatRM(v.price)}</span>
+        </label>`).join("");
+    } else { vGroup.style.display = "none"; }
+
+    // Add-ons
+    const aGroup = document.getElementById("addonGroup");
+    if (current.addons && current.addons.length) {
+      aGroup.style.display = "block";
+      document.getElementById("addonList").innerHTML = current.addons.map((a, i) => `
+        <label class="opt" data-ai="${i}">
+          <input type="checkbox" value="${i}">
+          <span class="opt-name">${a.name}</span>
+          <span class="opt-price">+ ${formatRM(a.price)}</span>
+        </label>`).join("");
+    } else { aGroup.style.display = "none"; }
+
+    recalc();
+    overlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeSheet() {
+    overlay.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  // Variant / add-on selection
+  document.getElementById("variantList").addEventListener("change", (e) => {
+    const i = +e.target.value;
+    chosenVariant = current.variants[i];
+    document.querySelectorAll("#variantList .opt").forEach((el,k)=>el.classList.toggle("checked", k===i));
+    recalc();
+  });
+  document.getElementById("addonList").addEventListener("change", (e) => {
+    const i = +e.target.value;
+    const label = e.target.closest(".opt");
+    if (e.target.checked) { chosenAddons.push(current.addons[i]); label.classList.add("checked"); }
+    else { chosenAddons = chosenAddons.filter(a => a !== current.addons[i]); label.classList.remove("checked"); }
+    recalc();
+  });
+
+  // Quantity steppers
+  document.getElementById("qMinus").addEventListener("click", () => { if (qty>1) { qty--; document.getElementById("qVal").textContent=qty; recalc(); }});
+  document.getElementById("qPlus").addEventListener("click",  () => { qty++; document.getElementById("qVal").textContent=qty; recalc(); });
+
+  function unitPrice() {
+    const base = chosenVariant ? chosenVariant.price : current.price;
+    const extra = chosenAddons.reduce((s,a)=>s+a.price,0);
+    return base + extra;
+  }
+  function recalc() {
+    document.getElementById("addTotal").textContent = formatRM(unitPrice() * qty);
+    const needVariant = current.variants && current.variants.length && !chosenVariant;
+    document.getElementById("addBtn").disabled = needVariant;
+  }
+
+  // Add to cart from modal
+  document.getElementById("addBtn").addEventListener("click", () => {
+    if (current.variants && current.variants.length && !chosenVariant) { toast("Please choose an option"); return; }
+    Cart.add({
+      id: current.id,
+      name: current.name,
+      emoji: current.emoji,
+      img: current.img || null,
+      basePrice: current.price,
+      variant: chosenVariant ? { name: chosenVariant.name, price: chosenVariant.price } : null,
+      addons: chosenAddons.map(a => ({ name: a.name, price: a.price })),
+      notes: document.getElementById("notes").value.trim(),
+      qty,
+    });
+    toast(`${qty}× ${current.name} added`);
+    closeSheet();
+    updateCartbar();
+  });
+
+  document.getElementById("sheetClose").addEventListener("click", closeSheet);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeSheet(); });
+
+  /* ===================== Floating cart bar ===================== */
+  function updateCartbar() {
+    const bar = document.getElementById("cartbar");
+    const n = Cart.count();
+    document.getElementById("cartbarCount").textContent = n;
+    document.getElementById("cartbarTotal").textContent = formatRM(Cart.subtotal());
+    bar.classList.toggle("hidden", n === 0);
+  }
+
+  /* ===================== Init ===================== */
+  (async () => {
+    await syncMenuFromAPI();   // use DB menu if the PHP backend is running; else built-in
+    renderCats();
+    renderMenu();
+    updateCartbar();
+  })();
+  </script>
+</body>
+</html>
