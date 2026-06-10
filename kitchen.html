@@ -114,25 +114,17 @@
   let currentName = null;
   let prevReadyIds = new Set();
 
-  // Check session
+  // Check auth from localStorage
   async function checkAuth() {
-    try {
-      const r = await fetch("api/staff_auth.php", { cache: "no-store" });
-      const j = await r.json();
-      if (!j || !j.loggedIn) {
-        location.href = "staff-login.html";
-        return false;
-      }
-      currentRole = j.role;
-      currentName = j.name;
-      return true;
-    } catch (e) {
-      // No backend — allow demo mode with role prompt
-      const role = prompt("Demo mode: enter role (kitchen / waiter)") || "kitchen";
-      currentRole = role;
-      currentName = role === "kitchen" ? "Kitchen Staff" : "Waiter";
+    const saved = localStorage.getItem("sz_staff");
+    if (saved) {
+      const s = JSON.parse(saved);
+      currentRole = s.role;
+      currentName = s.name;
       return true;
     }
+    location.href = "staff-login.html";
+    return false;
   }
 
   function setupHeader() {
@@ -257,15 +249,8 @@
     load();
   });
 
-  // Logout
   document.getElementById("logoutBtn").addEventListener("click", async () => {
-    try {
-      await fetch("api/staff_auth.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "logout" }),
-      });
-    } catch (e) {}
+    localStorage.removeItem("sz_staff");
     location.href = "staff-login.html";
   });
 

@@ -7,74 +7,55 @@
   <title>Staff Login — Sup Tulang ZZ</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
+    body { background: var(--bg); }
     .login-wrap {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      box-sizing: border-box;
+      min-height: 100vh; display: flex;
+      flex-direction: column; align-items: center;
+      justify-content: center; padding: 24px; box-sizing: border-box;
     }
-
     .login-card {
-      width: 100%;
-      max-width: 380px;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 32px 28px;
-      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      width: 100%; max-width: 380px; background: #fff;
+      border: 1px solid var(--line); border-radius: 18px;
+      padding: 32px 28px; box-shadow: 0 4px 24px rgba(0,0,0,.08);
     }
-
     .login-head { text-align: center; margin-bottom: 28px; }
     .login-head .logo { font-size: 40px; }
     .login-head h1 { font-size: 20px; margin: 8px 0 4px; }
     .login-head p  { font-size: 13px; color: var(--muted); margin: 0; }
-
     .field { margin-bottom: 16px; }
     .field label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
     .field input {
-      width: 100%; box-sizing: border-box;
-      padding: 12px 14px; border-radius: 10px;
-      border: 1.5px solid var(--line); font-size: 15px;
-      background: #fafafa;
+      width: 100%; box-sizing: border-box; padding: 12px 14px;
+      border-radius: 10px; border: 1.5px solid var(--line);
+      font-size: 15px; background: #fafafa;
     }
     .field input:focus { outline: none; border-color: var(--red); background: #fff; }
-
     .err-msg {
-      background: #fff0f0; border: 1px solid #f5c0c0;
-      color: #c0392b; border-radius: 8px;
-      padding: 10px 14px; font-size: 13px;
+      background: #fff0f0; border: 1px solid #f5c0c0; color: #c0392b;
+      border-radius: 8px; padding: 10px 14px; font-size: 13px;
       margin-bottom: 14px; display: none;
     }
-
-    .login-footer { text-align: center; margin-top: 20px; font-size: 12px; color: var(--muted); }
-
-    /* Default credentials hint */
     .creds-hint {
-      background: #f8f8f8; border: 1px solid var(--line);
-      border-radius: 10px; padding: 12px 14px;
-      font-size: 12px; color: var(--muted);
+      background: #f8f8f8; border: 1px solid var(--line); border-radius: 10px;
+      padding: 12px 14px; font-size: 12px; color: var(--muted);
       margin-bottom: 20px; line-height: 1.8;
     }
     .creds-hint strong { color: #333; }
+    .login-footer { text-align: center; margin-top: 20px; font-size: 12px; color: var(--muted); }
   </style>
 </head>
-<body style="background:var(--bg)">
+<body>
   <div class="login-wrap">
     <div class="login-card">
-
       <div class="login-head">
         <div class="logo">🍲</div>
         <h1>Staff Login</h1>
         <p>Sup Tulang ZZ · Kitchen &amp; Waiter</p>
       </div>
 
-      <!-- Default credentials hint (remove in production) -->
       <div class="creds-hint">
-        <strong>Kitchen:</strong> kitchen@suptulangzz.com / kitchen123<br>
-        <strong>Waiter:</strong> waiter@suptulangzz.com / waiter123
+        <strong>Kitchen:</strong> kitchen@suptulangzz.com / password<br>
+        <strong>Waiter:</strong> waiter@suptulangzz.com / password
       </div>
 
       <div class="err-msg" id="errMsg">Invalid email or password.</div>
@@ -97,14 +78,9 @@
   </div>
 
   <script>
-  // If already logged in, redirect to kitchen
-  (async () => {
-    try {
-      const r = await fetch("api/staff_auth.php", { cache: "no-store" });
-      const j = await r.json();
-      if (j && j.loggedIn) location.href = "kitchen.html";
-    } catch (e) {}
-  })();
+  // If already logged in, go straight to kitchen
+  const saved = localStorage.getItem("sz_staff");
+  if (saved) location.href = "kitchen.html";
 
   document.getElementById("password").addEventListener("keydown", e => {
     if (e.key === "Enter") document.getElementById("loginBtn").click();
@@ -135,6 +111,7 @@
       const j = await r.json();
 
       if (j && j.ok) {
+        localStorage.setItem("sz_staff", JSON.stringify({ role: j.role, name: j.name }));
         location.href = "kitchen.html";
       } else {
         errMsg.textContent = "Invalid email or password.";
