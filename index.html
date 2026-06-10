@@ -40,7 +40,11 @@
   <script>
     const params = new URLSearchParams(location.search);
     const table  = params.get("table");
-    if (table) Table.set(table);
+    if (table) {
+      Table.set(table);
+    } else {
+      localStorage.removeItem("sz_table");
+    }
     const t = Table.get();
 
     if (t) {

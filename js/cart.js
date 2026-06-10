@@ -57,6 +57,7 @@ async function syncMenuFromAPI() {
 const Table = {
   get() { return localStorage.getItem(STORAGE_KEYS.table) || ""; },
   set(t) { localStorage.setItem(STORAGE_KEYS.table, String(t)); },
+  clear: () => localStorage.removeItem("sz_table"),
 };
 
 /* ---------- Cart ---------- */
