@@ -11,7 +11,7 @@
   <div class="app">
     <header class="header">
       <a class="back" href="menu.html">←</a>
-      <div class="title">Order Status <small id="tableSmall">Table —</small></div>
+      <div class="title">Order Status</div>
       <a class="cart-link" href="cart.html">🛒<span class="cart-badge">0</span></a>
     </header>
 
@@ -21,23 +21,96 @@
   <script src="js/data.js"></script>
   <script src="js/cart.js"></script>
   <script>
-  document.getElementById("tableSmall").textContent = Table.get() ? ("Table " + Table.get()) : "Walk-in";
-
   const pageEl = document.getElementById("page");
 
-  const STEPS = [
-    { key: "pending",   label: "Order Received",  sub: "Sent to the kitchen",      icon: "📝" },
-    { key: "preparing", label: "In Progress",     sub: "Your food is being cooked", icon: "👨‍🍳" },
-    { key: "ready",     label: "Ready",           sub: "Ready to be served",        icon: "🔔" },
-    { key: "completed", label: "Completed",       sub: "Enjoy your meal!",          icon: "✅" },
+  // Steps definition per order type
+  const STEPS_WALKIN = [
+    { key: "pending",   label: "Order Received",  sub: "Sent to the kitchen",        icon: "📝" },
+    { key: "preparing", label: "In Progress",      sub: "Your food is being cooked",  icon: "👨‍🍳" },
+    { key: "ready",     label: "Ready",            sub: "Ready to be served",         icon: "🔔" },
+    { key: "completed", label: "Completed",        sub: "Enjoy your meal!",           icon: "✅" },
   ];
+
+  const STEPS_DELIVERY = [
+    { key: "pending",   label: "Order Received",   sub: "We've received your order",       icon: "📝" },
+    { key: "preparing", label: "In Progress",       sub: "Your food is being prepared",     icon: "👨‍🍳" },
+    { key: "ready",     label: "Ready",             sub: "Your order is packed",            icon: "📦" },
+    { key: "completed", label: "Out for Delivery",  sub: "Your order is on the way!",       icon: "🛵" },
+    { key: "arrived",   label: "Arrived",           sub: "Your order has been delivered!",  icon: "✅" },
+  ];
+
+  const STEPS_PICKUP = [
+    { key: "pending",   label: "Order Received",   sub: "We've received your order",        icon: "📝" },
+    { key: "preparing", label: "In Progress",       sub: "Your food is being prepared",      icon: "👨‍🍳" },
+    { key: "ready",     label: "Ready to Pick Up",  sub: "Come collect your order!",         icon: "🔔" },
+    { key: "completed", label: "Complete",          sub: "Thank you for your order!",        icon: "✅" },
+  ];
+
+  const ETA = {
+    walkin: {
+      pending:   "Waiting for the kitchen to accept…",
+      preparing: "Estimated 10–15 min",
+      ready:     "Please wait to be served 🎉",
+      completed: "Thank you for dining with us!",
+    },
+    delivery: {
+      pending:   "We've received your order!",
+      preparing: "Estimated 20–30 min",
+      ready:     "Your order is being packed…",
+      completed: "Your order is on the way! 🛵",
+      arrived:   "Your order has arrived. Enjoy! 🎉",
+    },
+    pickup: {
+      pending:   "We've received your order!",
+      preparing: "Estimated 15–20 min",
+      ready:     "Your order is ready — come pick it up! 🔔",
+      completed: "Thank you! See you again 😊",
+    },
+  };
 
   function fmtTime(ts) {
     return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
+  function getOrderType(order) {
+    if (order.order_type === "online" || order.delivery_type) {
+      return order.delivery_type === "pickup" ? "pickup" : "delivery";
+    }
+    return "walkin";
+  }
+
+  function getSteps(orderType) {
+    if (orderType === "delivery") return STEPS_DELIVERY;
+    if (orderType === "pickup")   return STEPS_PICKUP;
+    return STEPS_WALKIN;
+  }
+
   function render() {
-    const order = Order.current();
+    let order = Order.current();
+
+    // Fallback to online order
+    if (!order) {
+      const onlineRaw = localStorage.getItem("sz_online_order");
+      if (onlineRaw) {
+        const o = JSON.parse(onlineRaw);
+        order = {
+          id:           o.id,
+          table:        null,
+          customerName: o.customer_name,
+          items:        o.items || [],
+          subtotal:     o.subtotal,
+          tax:          o.tax,
+          total:        o.total,
+          status:       o.status || "pending",
+          order_type:   "online",
+          delivery_type: o.delivery_type || "delivery",
+          placedAt:     Date.now(),
+          history:      [{ status: "pending", at: Date.now() }],
+          remote:       true,
+        };
+        localStorage.setItem("sz_current_order", JSON.stringify(order));
+      }
+    }
 
     if (!order) {
       pageEl.innerHTML = `
@@ -49,21 +122,24 @@
       return;
     }
 
-    const curIdx = STEPS.findIndex(s => s.key === order.status);
+    const orderType = getOrderType(order);
+    const STEPS     = getSteps(orderType);
+    const etaMap    = ETA[orderType];
 
-    // status pill text + eta
-    const etaText = {
-      pending:   "Waiting for the kitchen to accept…",
-      preparing: "Estimated 10–15 min",
-      ready:     "Please wait to be served 🎉",
-      completed: "Thank you for dining with us!",
-    }[order.status];
+    // Map status — "arrived" only exists in delivery
+    let displayStatus = order.status;
+    if (orderType !== "delivery" && displayStatus === "arrived") displayStatus = "completed";
+
+    const curIdx = STEPS.findIndex(s => s.key === displayStatus);
+    const safeIdx = curIdx === -1 ? 0 : curIdx;
+
+    const etaText = etaMap[displayStatus] || etaMap["pending"];
 
     let timeline = "";
     STEPS.forEach((s, i) => {
-      const done = i < curIdx;
-      const active = i === curIdx;
-      const at = order.history.find(h => h.status === s.key);
+      const done   = i < safeIdx;
+      const active = i === safeIdx;
+      const at     = (order.history || []).find(h => h.status === s.key);
       timeline += `
         <li class="${done ? "done" : ""} ${active ? "active" : ""}">
           <div class="dot">${done ? "✓" : s.icon}</div>
@@ -75,23 +151,32 @@
     });
 
     let recap = "";
-    order.items.forEach(it => {
-      const meta = [it.variant ? it.variant.name : null, ...(it.addons||[]).map(a => "+"+a.name)].filter(Boolean).join(", ");
+    (order.items || []).forEach(it => {
+      const meta = [
+        it.variant ? it.variant.name : (it.variant_name || null),
+        ...((it.addons || []).map(a => "+" + a.name))
+      ].filter(Boolean).join(", ");
       recap += `
         <div class="recap-row">
           <span><span class="q">${it.qty}×</span> ${it.name}${meta ? ` <span class="q">(${meta})</span>` : ""}</span>
-          <span>${formatRM(Cart.unitPrice(it) * it.qty)}</span>
+          <span>${formatRM((it.unit_price || Cart.unitPrice(it)) * it.qty)}</span>
         </div>`;
     });
+
+    const tableLabel = order.table && order.table !== "—"
+      ? "Table " + order.table + " · "
+      : (orderType === "delivery" ? "Delivery · " : orderType === "pickup" ? "Self Pickup · " : "");
+
+    const isComplete = displayStatus === "completed" || displayStatus === "arrived";
 
     pageEl.innerHTML = `
       <div class="order-card">
         <div class="order-no">Order Number</div>
         <div class="order-id">#${order.id}</div>
-        <div class="status-pill ${order.status}">${STEPS[curIdx].label}</div>
+        <div class="status-pill ${displayStatus}">${STEPS[safeIdx].label}</div>
         <div class="eta">${etaText}</div>
         <div style="font-size:13px;color:var(--muted);margin-top:6px">
-          ${order.table !== "—" ? "Table " + order.table + " · " : ""}Placed at ${fmtTime(order.placedAt)}
+          ${tableLabel}Placed at ${fmtTime(order.placedAt)}
           ${order.customerName ? " · " + order.customerName : ""}
         </div>
       </div>
@@ -113,13 +198,15 @@
       <div style="height:18px"></div>
       <a class="btn secondary" href="menu.html">＋ Add More Items</a>
 
-      ${order.status !== "completed" ? `
+      ${!isComplete ? `
         <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:18px">
-          This page updates automatically as the kitchen prepares your order.
+          This page updates automatically.
         </p>
         ${order.remote ? "" : `<button class="btn ghost" id="simBtn" style="margin-top:10px">▶︎ Demo: advance status</button>`}
       ` : `
-        <p style="text-align:center;color:var(--green);font-weight:700;margin-top:18px">Order completed ✅</p>
+        <p style="text-align:center;color:var(--green);font-weight:700;margin-top:18px">
+          ${orderType === "delivery" ? "Order delivered ✅" : orderType === "pickup" ? "Order complete ✅" : "Order completed ✅"}
+        </p>
       `}
     `;
 
@@ -129,10 +216,7 @@
 
   render();
 
-  /* ---- Live updates ----
-     Real orders (placed through the PHP backend) poll the server for the
-     status the kitchen/staff set. Standalone demo orders advance on their
-     own every 8s so the timeline is still visible without a backend. */
+  // Poll API for live status updates
   const _o = Order.current();
   if (_o && _o.remote) {
     const poll = setInterval(async () => {
@@ -144,11 +228,19 @@
           const j = await r.json();
           if (j && j.status && j.status !== o.status) {
             o.status = j.status;
+            o.history = o.history || [];
             o.history.push({ status: j.status, at: Date.now() });
+            // Also update sz_online_order if exists
+            const onlineRaw = localStorage.getItem("sz_online_order");
+            if (onlineRaw) {
+              const oo = JSON.parse(onlineRaw);
+              oo.status = j.status;
+              localStorage.setItem("sz_online_order", JSON.stringify(oo));
+            }
             localStorage.setItem("sz_current_order", JSON.stringify(o));
             render();
           }
-          if (j && j.status === "completed") clearInterval(poll);
+          if (j && (j.status === "completed" || j.status === "arrived")) clearInterval(poll);
         }
       } catch (e) { /* keep trying */ }
     }, 4000);
