@@ -52,7 +52,13 @@
       document.getElementById("tableLabel").closest(".table-pill").innerHTML = "🍽️ <span>Table " + t + "</span>";
       document.getElementById("footNote").textContent = "Dine-in self-ordering · No app download needed";
     } else {
-      // Online
+      // Online — clear all previous order data for fresh session
+      localStorage.removeItem("sz_current_order");
+      localStorage.removeItem("sz_payment");
+      localStorage.removeItem("sz_online_order");
+      localStorage.removeItem("sz_checkout");
+      localStorage.removeItem("sz_cart");
+
       document.getElementById("tableLabel").closest(".table-pill").innerHTML = "🌐 <span>Online Order</span>";
       document.getElementById("steps").innerHTML = `
         <li><span class="num">1</span><div><strong>Browse the menu</strong><span>Tap any dish to see details &amp; options.</span></div></li>
@@ -60,7 +66,7 @@
         <li><span class="num">3</span><div><strong>Fill in your details</strong><span>Enter your name, address and contact.</span></div></li>
         <li><span class="num">4</span><div><strong>Pay &amp; confirm</strong><span>Pay online and get a confirmation email.</span></div></li>
       `;
-      document.getElementById("footNote").textContent = "Online ordering · Delivery &amp; self pickup available";
+      document.getElementById("footNote").textContent = "Online ordering · Delivery & self pickup available";
     }
   </script>
 </body>

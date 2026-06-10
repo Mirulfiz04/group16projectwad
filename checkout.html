@@ -122,6 +122,11 @@
   <script src="js/data.js"></script>
   <script src="js/cart.js"></script>
   <script>
+  // Clear any previous order data for fresh online session
+  localStorage.removeItem("sz_current_order");
+  localStorage.removeItem("sz_payment");
+  localStorage.removeItem("sz_online_order");
+
   let deliveryType = "delivery";
 
   // Render cart summary
