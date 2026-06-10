@@ -43,7 +43,6 @@ function db(): PDO
 
 function ensure_schema(PDO $pdo, string $driver): void
 {
-    // Auto-increment syntax differs between MySQL and SQLite.
     $autoId = $driver === 'mysql'
         ? 'INT AUTO_INCREMENT PRIMARY KEY'
         : 'INTEGER PRIMARY KEY AUTOINCREMENT';
@@ -63,16 +62,20 @@ function ensure_schema(PDO $pdo, string $driver): void
     )");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS orders (
-        id            VARCHAR(20) PRIMARY KEY,
-        table_no      VARCHAR(10),
-        customer_name VARCHAR(120),
-        note          TEXT,
-        subtotal      DECIMAL(10,2),
-        tax           DECIMAL(10,2),
-        total         DECIMAL(10,2),
-        status        VARCHAR(20) DEFAULT 'pending',
-        created_at    VARCHAR(25),
-        updated_at    VARCHAR(25)
+        id               VARCHAR(20) PRIMARY KEY,
+        order_type       VARCHAR(10) DEFAULT 'walkin',
+        table_no         VARCHAR(10),
+        customer_name    VARCHAR(120),
+        customer_email   VARCHAR(100),
+        customer_phone   VARCHAR(20),
+        delivery_address TEXT,
+        note             TEXT,
+        subtotal         DECIMAL(10,2),
+        tax              DECIMAL(10,2),
+        total            DECIMAL(10,2),
+        status           VARCHAR(20) DEFAULT 'pending',
+        created_at       VARCHAR(25),
+        updated_at       VARCHAR(25)
     )");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS order_items (
@@ -85,6 +88,24 @@ function ensure_schema(PDO $pdo, string $driver): void
         notes        VARCHAR(255),
         unit_price   DECIMAL(8,2),
         qty          INT
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS payments (
+        id             $autoId,
+        order_id       VARCHAR(20),
+        payment_method VARCHAR(20),
+        payment_detail VARCHAR(100),
+        amount         DECIMAL(10,2),
+        status         VARCHAR(20) DEFAULT 'success',
+        paid_at        VARCHAR(25)
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS staff (
+        id       $autoId,
+        name     VARCHAR(100) NOT NULL,
+        email    VARCHAR(100) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        role     VARCHAR(20)  NOT NULL
     )");
 }
 
