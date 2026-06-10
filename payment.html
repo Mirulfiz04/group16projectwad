@@ -169,18 +169,23 @@
   let selectedBank = null;
   let selectedWallet = null;
 
-  // --- Render mini summary from stored order or cart ---
+  // --- Render mini summary — always use cart for online orders ---
   function renderSummary() {
-    const order = Order.current();
     const el = document.getElementById("miniSummary");
-    const items = order ? order.items : Cart.get();
-    const subtotal = order ? order.subtotal : Cart.subtotal();
-    const tax      = order ? order.tax      : Cart.tax();
-    const total    = order ? order.total    : Cart.total();
+    const items    = Cart.get();
+    const subtotal = Cart.subtotal();
+    const tax      = Cart.tax();
+    const total    = Cart.total();
+
+    if (!items.length) {
+      el.innerHTML = `<div class="mini-row"><span class="muted">No items in cart.</span></div>`;
+      document.getElementById("payTotal").textContent = "RM 0.00";
+      return;
+    }
 
     let rows = items.map(it => {
-      const label = it.variant_name || (it.variant ? it.variant.name : null);
-      return `<div class="mini-row"><span>${it.qty}× ${it.name}${label ? " ("+label+")" : ""}</span><span>${formatRM((it.unit_price || Cart.unitPrice(it)) * it.qty)}</span></div>`;
+      const label = it.variant ? it.variant.name : null;
+      return `<div class="mini-row"><span>${it.qty}× ${it.name}${label ? " ("+label+")" : ""}</span><span>${formatRM(Cart.unitPrice(it) * it.qty)}</span></div>`;
     }).join("");
 
     rows += `
@@ -240,8 +245,7 @@
     if (!valid) return;
 
     // Show mock overlay
-    const order = Order.current();
-    const total = order ? order.total : Cart.total();
+    const total = Cart.total();
     const label = method === "fpx" ? selectedBank : selectedWallet;
     const icon  = method === "fpx" ? "🏦" : "📱";
     document.getElementById("mockIcon").textContent = icon;
