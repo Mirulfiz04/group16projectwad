@@ -141,7 +141,7 @@
 
   function lineText(it) {
     const extra = [it.variant_name, it.addons_text].filter(Boolean).join(", ");
-    return `${it.qty}× ${it.name}${extra ? " (" + extra + ")" : ""}${it.notes ? " — "${it.notes}"" : ""}`;
+    return `${it.qty}× ${it.name}${extra ? " (" + extra + ")" : ""}${it.notes ? " — \"" + it.notes + "\"" : ""}`;
   }
 
   function renderOrders(orders) {
