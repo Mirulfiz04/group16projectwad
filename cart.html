@@ -54,7 +54,11 @@
       return;
     }
 
-    let html = `<div class="note-banner">🍽️ Dine-in order for <strong>${Table.get() ? "Table " + Table.get() : "Walk-in"}</strong>. Please confirm your items before placing the order.</div>`;
+    const isOnline = !Table.get();
+
+    let html = isOnline
+      ? `<div class="note-banner">🌐 Online order. Please confirm your items before checkout.</div>`
+      : `<div class="note-banner">🍽️ Dine-in order for <strong>Table ${Table.get()}</strong>. Please confirm your items before placing the order.</div>`;
 
     items.forEach(it => {
       const sig = Cart.signature(it);
@@ -65,7 +69,7 @@
           <div class="ci-info">
             <div class="ci-name">${it.name}</div>
             ${meta ? `<div class="ci-meta">${meta}</div>` : ""}
-            ${it.notes ? `<div class="ci-notes">“${it.notes}”</div>` : ""}
+            ${it.notes ? `<div class="ci-notes">"${it.notes}"</div>` : ""}
             <div class="ci-bottom">
               <div class="qty sm">
                 <button class="dec" aria-label="Decrease">−</button>
@@ -79,29 +83,36 @@
         </div>`;
     });
 
-    // Customer details + summary
-    html += `
-      <h3 style="margin:22px 0 10px;font-size:16px">Your details</h3>
-      <div class="field">
-        <label for="custName">Name <span style="color:var(--muted);font-weight:400">(so staff can call you)</span></label>
-        <input id="custName" type="text" placeholder="e.g. Amirul" value="${localStorage.getItem('sz_name')||''}" />
-      </div>
-      <div class="field">
-        <label for="orderNote">Note for the kitchen (optional)</label>
-        <textarea id="orderNote" rows="2" placeholder="e.g. serve drinks first"></textarea>
-      </div>
+    // Show customer details + note only for walk-in
+    if (!isOnline) {
+      html += `
+        <h3 style="margin:22px 0 10px;font-size:16px">Your details</h3>
+        <div class="field">
+          <label for="custName">Name <span style="color:var(--muted);font-weight:400">(so staff can call you)</span></label>
+          <input id="custName" type="text" placeholder="e.g. Amirul" value="${localStorage.getItem('sz_name')||''}" />
+        </div>
+        <div class="field">
+          <label for="orderNote">Note for the kitchen (optional)</label>
+          <textarea id="orderNote" rows="2" placeholder="e.g. serve drinks first"></textarea>
+        </div>`;
+    }
 
+    html += `
       <div class="summary">
         <div class="row"><span class="muted">Subtotal</span><span>${formatRM(Cart.subtotal())}</span></div>
         <div class="row"><span class="muted">SST (${(RESTAURANT.taxRate*100).toFixed(0)}%)</span><span>${formatRM(Cart.tax())}</span></div>
         <div class="row total"><span>Total</span><span>${formatRM(Cart.total())}</span></div>
       </div>
-      <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:14px">
-        Pay at the counter / cashier after your meal.
-      </p>`;
+      ${!isOnline ? `<p style="text-align:center;color:var(--muted);font-size:12px;margin-top:14px">Your order will be sent straight to the kitchen.</p>` : ""}`;
 
     pageEl.innerHTML = html;
-    document.getElementById("footTotal").textContent = formatRM(Cart.total());
+
+    // Update footer button label
+    const placeBtn = document.getElementById("placeBtn");
+    placeBtn.innerHTML = isOnline
+      ? `Proceed to Checkout · <span id="footTotal">${formatRM(Cart.total())}</span>`
+      : `Place Order · <span id="footTotal">${formatRM(Cart.total())}</span>`;
+
     footerEl.style.display = "block";
   }
 
@@ -113,15 +124,14 @@
     const it = Cart.get().find(i => Cart.signature(i) === sig);
     if (!it) return;
 
-    if (e.target.closest(".inc"))      Cart.setQty(sig, it.qty + 1);
-    else if (e.target.closest(".dec")) Cart.setQty(sig, it.qty - 1);
+    if (e.target.closest(".inc"))           Cart.setQty(sig, it.qty + 1);
+    else if (e.target.closest(".dec"))      Cart.setQty(sig, it.qty - 1);
     else if (e.target.closest(".ci-remove")) { Cart.remove(sig); toast("Item removed"); }
     else return;
     render();
   });
 
-  /* Try to place the order through the PHP backend. Returns the stored order
-     (with the server's id) on success, or null so we can fall back locally. */
+  /* Place order via API (walk-in only) */
   async function placeViaApi(name, note) {
     const payload = {
       table: Table.get(),
@@ -149,7 +159,7 @@
         subtotal: j.subtotal, tax: j.tax, total: j.total,
         status: j.status || "pending", placedAt: now,
         history: [{ status: "pending", at: now }],
-        remote: true,                       // tracking.html will poll the API
+        remote: true,
       };
       localStorage.setItem("sz_current_order", JSON.stringify(order));
       Cart.clear();
@@ -157,25 +167,27 @@
     } catch (e) { return null; }
   }
 
-  /* Place order */
+  /* Place order button */
   document.getElementById("footer").addEventListener("click", async (e) => {
     if (!e.target.closest("#placeBtn")) return;
     if (!Cart.count()) { toast("Your cart is empty"); return; }
 
     const btn = document.getElementById("placeBtn");
     btn.disabled = true;
-    const name = (document.getElementById("custName")?.value || "").trim();
-    const note = (document.getElementById("orderNote")?.value || "").trim();
-    if (name) localStorage.setItem("sz_name", name);
-
-    // Use the backend if it's available; otherwise place the order locally.
-    let order = await placeViaApi(name, note);
-    if (!order) order = Order.place({ name, note });
 
     if (Table.get()) {
-      location.href = "tracking.html";  // walk-in
+      // Walk-in: place order now then go to tracking
+      const name = (document.getElementById("custName")?.value || "").trim();
+      const note = (document.getElementById("orderNote")?.value || "").trim();
+      if (name) localStorage.setItem("sz_name", name);
+
+      let order = await placeViaApi(name, note);
+      if (!order) order = Order.place({ name, note });
+
+      location.href = "tracking.html";
     } else {
-      location.href = "checkout.html";  // online
+      // Online: keep cart, go to checkout
+      location.href = "checkout.html";
     }
   });
 
