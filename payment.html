@@ -70,8 +70,8 @@
 <body>
   <div class="app">
     <header class="header">
-      <a class="back" href="cart.html">←</a>
-      <div class="title">Payment <small id="tableSmall">Table —</small></div>
+      <a class="back" href="checkout.html">←</a>
+      <div class="title">Payment</div>
       <span></span>
     </header>
 
@@ -164,7 +164,6 @@
   <script src="js/data.js"></script>
   <script src="js/cart.js"></script>
   <script>
-  document.getElementById("tableSmall").textContent = Table.get() ? ("Table " + Table.get()) : "Walk-in";
 
   let method = "fpx";
   let selectedBank = null;
@@ -256,104 +255,65 @@
     document.getElementById("mockOverlay").classList.remove("show");
   });
 
-  // --- On confirm: save payment via API then redirect ---
+  // --- On confirm: online order only ---
   document.getElementById("mockConfirm").addEventListener("click", async () => {
     document.getElementById("mockConfirm").disabled = true;
     document.getElementById("mockConfirm").textContent = "Processing…";
 
     const detail   = method === "fpx" ? selectedBank : selectedWallet;
     const checkout = JSON.parse(localStorage.getItem("sz_checkout") || "{}");
-    const isOnline = checkout.order_type === "online";
 
-    let orderId = null;
-
-    if (isOnline) {
-      // --- Online order: place order + payment in one call ---
-      try {
-        const r = await fetch("api/online_order.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customer_name:    checkout.name,
-            customer_email:   checkout.email,
-            customer_phone:   checkout.phone,
-            delivery_address: checkout.address,
-            delivery_type:    checkout.delivery_type,
-            note:             checkout.note,
-            payment_method:   method,
-            payment_detail:   detail,
-            items: Cart.get().map(it => ({
-              id: it.id, name: it.name, emoji: it.emoji, img: it.img,
-              basePrice: it.basePrice, variant: it.variant,
-              addons: it.addons, notes: it.notes, qty: it.qty,
-            })),
-          }),
-        });
-        const j = await r.json();
-        if (j && j.ok) {
-          orderId = j.id;
-          // Store confirmation data
-          localStorage.setItem("sz_online_order", JSON.stringify({
-            id: j.id, subtotal: j.subtotal, tax: j.tax, total: j.total,
-            items: Cart.get(), customer_name: checkout.name,
-            customer_email: checkout.email, delivery_type: checkout.delivery_type,
-            address: checkout.address, status: "pending",
-          }));
-          localStorage.setItem("sz_payment", JSON.stringify({
-            payment_id: j.payment_id, method, detail,
-            paid_at: new Date().toISOString(),
-          }));
-          Cart.clear();
-          localStorage.removeItem("sz_checkout");
-          location.href = "order-confirmation.html";
-          return;
-        }
-      } catch (e) {}
-
-      // Fallback offline
-      localStorage.setItem("sz_online_order", JSON.stringify({
-        id: "SZ-OFFLINE", subtotal: Cart.subtotal(), tax: Cart.tax(),
-        total: Cart.total(), items: Cart.get(),
-        customer_name: checkout.name, customer_email: checkout.email,
-        delivery_type: checkout.delivery_type, address: checkout.address,
-        status: "pending",
-      }));
-      localStorage.setItem("sz_payment", JSON.stringify({ method, detail, paid_at: new Date().toISOString() }));
-      Cart.clear();
-      localStorage.removeItem("sz_checkout");
-      location.href = "order-confirmation.html";
-
-    } else {
-      // --- Walk-in order: already placed, just save payment ---
-      const order = Order.current();
-      orderId = order ? order.id : null;
-      if (!orderId) {
-        toast("Order not found. Please go back.");
-        document.getElementById("mockConfirm").disabled = false;
-        document.getElementById("mockConfirm").textContent = "Confirm Payment";
-        document.getElementById("mockOverlay").classList.remove("show");
+    try {
+      const r = await fetch("api/online_order.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_name:    checkout.name,
+          customer_email:   checkout.email,
+          customer_phone:   checkout.phone,
+          delivery_address: checkout.address,
+          delivery_type:    checkout.delivery_type,
+          note:             checkout.note,
+          payment_method:   method,
+          payment_detail:   detail,
+          items: Cart.get().map(it => ({
+            id: it.id, name: it.name, emoji: it.emoji, img: it.img,
+            basePrice: it.basePrice, variant: it.variant,
+            addons: it.addons, notes: it.notes, qty: it.qty,
+          })),
+        }),
+      });
+      const j = await r.json();
+      if (j && j.ok) {
+        localStorage.setItem("sz_online_order", JSON.stringify({
+          id: j.id, subtotal: j.subtotal, tax: j.tax, total: j.total,
+          items: Cart.get(), customer_name: checkout.name,
+          customer_email: checkout.email, delivery_type: checkout.delivery_type,
+          address: checkout.address, status: "pending",
+        }));
+        localStorage.setItem("sz_payment", JSON.stringify({
+          payment_id: j.payment_id, method, detail,
+          paid_at: new Date().toISOString(),
+        }));
+        Cart.clear();
+        localStorage.removeItem("sz_checkout");
+        location.href = "order-confirmation.html";
         return;
       }
-      try {
-        const r = await fetch("api/payment.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order_id: orderId, payment_method: method, payment_detail: detail, amount: order.total }),
-        });
-        const j = await r.json();
-        if (j && j.ok) {
-          localStorage.setItem("sz_payment", JSON.stringify({ payment_id: j.payment_id, method, detail, paid_at: new Date().toISOString() }));
-          Cart.clear();
-          location.href = "receipt.html";
-          return;
-        }
-      } catch (e) {}
+    } catch (e) {}
 
-      // Fallback
-      localStorage.setItem("sz_payment", JSON.stringify({ method, detail, paid_at: new Date().toISOString() }));
-      Cart.clear();
-      location.href = "receipt.html";
-    }
+    // Fallback: no backend
+    localStorage.setItem("sz_online_order", JSON.stringify({
+      id: "SZ-OFFLINE", subtotal: Cart.subtotal(), tax: Cart.tax(),
+      total: Cart.total(), items: Cart.get(),
+      customer_name: checkout.name, customer_email: checkout.email,
+      delivery_type: checkout.delivery_type, address: checkout.address,
+      status: "pending",
+    }));
+    localStorage.setItem("sz_payment", JSON.stringify({ method, detail, paid_at: new Date().toISOString() }));
+    Cart.clear();
+    localStorage.removeItem("sz_checkout");
+    location.href = "order-confirmation.html";
   });
 
   renderSummary();

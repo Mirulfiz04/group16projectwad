@@ -172,7 +172,11 @@
     let order = await placeViaApi(name, note);
     if (!order) order = Order.place({ name, note });
 
-    location.href = "payment.html";
+    if (Table.get()) {
+      location.href = "tracking.html";  // walk-in
+    } else {
+      location.href = "checkout.html";  // online
+    }
   });
 
   render();

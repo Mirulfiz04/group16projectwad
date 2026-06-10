@@ -9,8 +9,6 @@
 </head>
 <body>
   <div class="app">
-    <!-- Landing page shown right after the customer scans the table QR code.
-         The QR code should encode a URL like:  index.html?table=7         -->
     <section class="hero">
       <div class="logo-badge">🍲</div>
       <div class="since">Since 1990's</div>
@@ -20,7 +18,7 @@
     </section>
 
     <div class="landing-body">
-      <ol class="steps">
+      <ol class="steps" id="steps">
         <li><span class="num">1</span><div><strong>Browse the menu</strong><span>Tap any dish to see details &amp; options.</span></div></li>
         <li><span class="num">2</span><div><strong>Add to cart</strong><span>Pick your add-ons, quantity and notes.</span></div></li>
         <li><span class="num">3</span><div><strong>Place your order</strong><span>We'll send it straight to the kitchen.</span></div></li>
@@ -31,7 +29,7 @@
       <div style="height:10px"></div>
       <a class="btn secondary" href="cart.html">View My Cart</a>
 
-      <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:24px">
+      <p id="footNote" style="text-align:center;color:var(--muted);font-size:12px;margin-top:24px">
         Dine-in self-ordering · No app download needed
       </p>
     </div>
@@ -40,12 +38,26 @@
   <script src="js/data.js"></script>
   <script src="js/cart.js"></script>
   <script>
-    // Read the table number from the QR code URL (?table=7) and remember it.
     const params = new URLSearchParams(location.search);
-    const table = params.get("table");
+    const table  = params.get("table");
     if (table) Table.set(table);
     const t = Table.get();
-    document.getElementById("tableLabel").textContent = t ? ("Table " + t) : "Walk-in";
+
+    if (t) {
+      // Walk-in
+      document.getElementById("tableLabel").closest(".table-pill").innerHTML = "🍽️ <span>Table " + t + "</span>";
+      document.getElementById("footNote").textContent = "Dine-in self-ordering · No app download needed";
+    } else {
+      // Online
+      document.getElementById("tableLabel").closest(".table-pill").innerHTML = "🌐 <span>Online Order</span>";
+      document.getElementById("steps").innerHTML = `
+        <li><span class="num">1</span><div><strong>Browse the menu</strong><span>Tap any dish to see details &amp; options.</span></div></li>
+        <li><span class="num">2</span><div><strong>Add to cart</strong><span>Pick your add-ons, quantity and notes.</span></div></li>
+        <li><span class="num">3</span><div><strong>Fill in your details</strong><span>Enter your name, address and contact.</span></div></li>
+        <li><span class="num">4</span><div><strong>Pay &amp; confirm</strong><span>Pay online and get a confirmation email.</span></div></li>
+      `;
+      document.getElementById("footNote").textContent = "Online ordering · Delivery &amp; self pickup available";
+    }
   </script>
 </body>
 </html>
