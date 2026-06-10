@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d6342b" />
+  <title>Checkout — Sup Tulang ZZ</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .section { margin: 0 0 22px; }
+    .section h3 { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 12px; }
+
+    .field { margin-bottom: 14px; }
+    .field label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
+    .field label .req { color: var(--red); margin-left: 2px; }
+    .field input, .field textarea {
+      width: 100%; box-sizing: border-box;
+      padding: 12px 14px; border-radius: 10px;
+      border: 1.5px solid var(--line); font-size: 15px;
+      background: var(--card); font-family: inherit;
+    }
+    .field input:focus, .field textarea:focus { outline: none; border-color: var(--red); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field .err { color: #c0392b; font-size: 12px; margin-top: 4px; display: none; }
+
+    /* Order summary */
+    .mini-summary { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+    .mini-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+    .mini-row:last-child { margin-bottom: 0; }
+    .mini-row.total { font-weight: 800; font-size: 16px; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 4px; }
+    .mini-row .muted { color: var(--muted); }
+
+    /* Delivery type toggle */
+    .dtype-row { display: flex; gap: 10px; margin-bottom: 16px; }
+    .dtype-btn {
+      flex: 1; padding: 12px 10px; border-radius: 12px;
+      border: 2px solid var(--line); background: var(--card);
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: border-color .15s, background .15s;
+    }
+    .dtype-btn .icon { font-size: 24px; }
+    .dtype-btn.active { border-color: var(--red); background: #fff5f5; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="back" href="cart.html">←</a>
+      <div class="title">Checkout</div>
+      <span></span>
+    </header>
+
+    <main class="page" id="page">
+
+      <!-- Order summary -->
+      <div class="section">
+        <h3>Order Summary</h3>
+        <div class="mini-summary" id="miniSummary">
+          <div class="mini-row"><span class="muted">Loading…</span></div>
+        </div>
+      </div>
+
+      <!-- Delivery type -->
+      <div class="section">
+        <h3>Order Type</h3>
+        <div class="dtype-row">
+          <button class="dtype-btn active" id="btnDelivery" onclick="switchType('delivery')">
+            <span class="icon">🛵</span>Delivery
+          </button>
+          <button class="dtype-btn" id="btnPickup" onclick="switchType('pickup')">
+            <span class="icon">🏠</span>Self Pickup
+          </button>
+        </div>
+      </div>
+
+      <!-- Customer details -->
+      <div class="section">
+        <h3>Your Details</h3>
+        <div class="field">
+          <label for="custName">Full Name <span class="req">*</span></label>
+          <input id="custName" type="text" placeholder="e.g. Ahmad Firdaus" />
+          <div class="err" id="errName">Please enter your name.</div>
+        </div>
+        <div class="field">
+          <label for="custEmail">Email Address <span class="req">*</span></label>
+          <input id="custEmail" type="email" placeholder="e.g. ahmad@email.com" />
+          <div class="err" id="errEmail">Please enter a valid email.</div>
+        </div>
+        <div class="field">
+          <label for="custPhone">Phone Number <span class="req">*</span></label>
+          <input id="custPhone" type="tel" placeholder="e.g. 0123456789" />
+          <div class="err" id="errPhone">Please enter your phone number.</div>
+        </div>
+      </div>
+
+      <!-- Delivery address (hidden for pickup) -->
+      <div class="section" id="addressSection">
+        <h3>Delivery Address</h3>
+        <div class="field">
+          <label for="address">Address <span class="req">*</span></label>
+          <textarea id="address" placeholder="e.g. No. 12, Jalan Seri 3, Taman Seri Alam, 81750 Masai, Johor"></textarea>
+          <div class="err" id="errAddress">Please enter your delivery address.</div>
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div class="section">
+        <h3>Additional Note</h3>
+        <div class="field">
+          <textarea id="orderNote" rows="2" placeholder="e.g. less spicy, no onion…"></textarea>
+        </div>
+      </div>
+
+    </main>
+
+    <div class="sticky-footer">
+      <button class="btn" id="continueBtn">Continue to Payment →</button>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+  let deliveryType = "delivery";
+
+  // Render cart summary
+  function renderSummary() {
+    const el = document.getElementById("miniSummary");
+    const items = Cart.get();
+    if (!items.length) {
+      el.innerHTML = `<div class="mini-row"><span class="muted">Your cart is empty.</span></div>`;
+      return;
+    }
+    let rows = items.map(it => {
+      const label = it.variant ? it.variant.name : null;
+      return `<div class="mini-row"><span>${it.qty}× ${it.name}${label ? " ("+label+")" : ""}</span><span>${formatRM(Cart.unitPrice(it) * it.qty)}</span></div>`;
+    }).join("");
+    rows += `
+      <div class="mini-row"><span class="muted">Subtotal</span><span>${formatRM(Cart.subtotal())}</span></div>
+      <div class="mini-row"><span class="muted">SST (6%)</span><span>${formatRM(Cart.tax())}</span></div>
+      <div class="mini-row total"><span>Total</span><span>${formatRM(Cart.total())}</span></div>`;
+    el.innerHTML = rows;
+  }
+
+  function switchType(type) {
+    deliveryType = type;
+    document.getElementById("btnDelivery").classList.toggle("active", type === "delivery");
+    document.getElementById("btnPickup").classList.toggle("active", type === "pickup");
+    document.getElementById("addressSection").style.display = type === "delivery" ? "block" : "none";
+  }
+
+  // Restore saved values
+  const saved = JSON.parse(localStorage.getItem("sz_checkout") || "{}");
+  if (saved.name)  document.getElementById("custName").value  = saved.name;
+  if (saved.email) document.getElementById("custEmail").value = saved.email;
+  if (saved.phone) document.getElementById("custPhone").value = saved.phone;
+
+  // Validate & proceed
+  document.getElementById("continueBtn").addEventListener("click", () => {
+    let valid = true;
+
+    const name  = document.getElementById("custName").value.trim();
+    const email = document.getElementById("custEmail").value.trim();
+    const phone = document.getElementById("custPhone").value.trim();
+    const address = document.getElementById("address").value.trim();
+    const note  = document.getElementById("orderNote").value.trim();
+
+    if (!name)  { document.getElementById("errName").style.display  = "block"; valid = false; }
+    else          document.getElementById("errName").style.display  = "none";
+
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!emailOk) { document.getElementById("errEmail").style.display = "block"; valid = false; }
+    else            document.getElementById("errEmail").style.display = "none";
+
+    if (!phone) { document.getElementById("errPhone").style.display = "block"; valid = false; }
+    else          document.getElementById("errPhone").style.display = "none";
+
+    if (deliveryType === "delivery" && !address) {
+      document.getElementById("errAddress").style.display = "block"; valid = false;
+    } else {
+      document.getElementById("errAddress").style.display = "none";
+    }
+
+    if (!valid) return;
+
+    // Save checkout details for payment + confirmation pages
+    const checkoutData = {
+      name, email, phone, note,
+      delivery_type: deliveryType,
+      address: deliveryType === "delivery" ? address : null,
+      order_type: "online",
+    };
+    localStorage.setItem("sz_checkout", JSON.stringify(checkoutData));
+
+    location.href = "payment.html";
+  });
+
+  renderSummary();
+  </script>
+</body>
+</html>
