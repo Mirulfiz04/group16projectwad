@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d6342b" />
+  <title>Payment — Sup Tulang ZZ</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .pay-section { margin: 0 0 20px; }
+    .pay-section h3 { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 10px; }
+
+    /* Method toggle */
+    .method-row { display: flex; gap: 10px; }
+    .method-btn {
+      flex: 1; padding: 14px 10px; border-radius: 12px;
+      border: 2px solid var(--line); background: var(--card);
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: border-color .15s, background .15s;
+    }
+    .method-btn .icon { font-size: 26px; }
+    .method-btn.active { border-color: var(--red); background: #fff5f5; }
+
+    /* Detail panels */
+    .detail-panel { display: none; }
+    .detail-panel.show { display: block; }
+
+    /* Bank / wallet grid */
+    .bank-grid, .wallet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .bank-btn, .wallet-btn {
+      padding: 12px 8px; border-radius: 10px; border: 2px solid var(--line);
+      background: var(--card); font-size: 13px; font-weight: 600;
+      cursor: pointer; text-align: center; transition: border-color .15s, background .15s;
+    }
+    .bank-btn .blogo, .wallet-btn .wlogo { font-size: 22px; display: block; margin-bottom: 4px; }
+    .bank-btn.active, .wallet-btn.active { border-color: var(--red); background: #fff5f5; }
+
+    .field label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
+    .field input  { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 10px;
+                    border: 1.5px solid var(--line); font-size: 15px; background: var(--card); }
+    .field input:focus { outline: none; border-color: var(--red); }
+    .field { margin-bottom: 14px; }
+
+    /* Order summary mini */
+    .mini-summary { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+    .mini-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+    .mini-row.total { font-weight: 800; font-size: 16px; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 4px; }
+    .mini-row .muted { color: var(--muted); }
+
+    /* Mock bank redirect overlay */
+    .mock-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+      z-index: 999; align-items: center; justify-content: center;
+    }
+    .mock-overlay.show { display: flex; }
+    .mock-box {
+      background: #fff; border-radius: 18px; padding: 28px 22px; width: 320px; max-width: 90vw; text-align: center;
+    }
+    .mock-box h2 { font-size: 18px; margin: 10px 0 6px; }
+    .mock-box p  { font-size: 13px; color: var(--muted); margin: 0 0 20px; }
+    .mock-box .mock-amount { font-size: 28px; font-weight: 800; color: var(--red); margin: 12px 0; }
+    .mock-box .btn { margin-top: 0; }
+    .mock-box .btn-cancel { display: block; margin-top: 10px; background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; }
+
+    .err { color: #c0392b; font-size: 13px; margin-top: -8px; margin-bottom: 10px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="back" href="cart.html">←</a>
+      <div class="title">Payment <small id="tableSmall">Table —</small></div>
+      <span></span>
+    </header>
+
+    <main class="page" id="page">
+
+      <!-- Order summary -->
+      <div class="pay-section">
+        <h3>Order Summary</h3>
+        <div class="mini-summary" id="miniSummary">
+          <div class="mini-row"><span class="muted">Loading…</span></div>
+        </div>
+      </div>
+
+      <!-- Payment method -->
+      <div class="pay-section">
+        <h3>Payment Method</h3>
+        <div class="method-row">
+          <button class="method-btn active" id="btnFpx" onclick="switchMethod('fpx')">
+            <span class="icon">🏦</span>Online Banking
+          </button>
+          <button class="method-btn" id="btnEwallet" onclick="switchMethod('ewallet')">
+            <span class="icon">📱</span>E-Wallet
+          </button>
+        </div>
+      </div>
+
+      <!-- FPX Panel -->
+      <div class="detail-panel show" id="panelFpx">
+        <div class="pay-section">
+          <h3>Select Bank</h3>
+          <div class="bank-grid" id="bankGrid">
+            <button class="bank-btn" data-bank="Maybank"><span class="blogo">🟡</span>Maybank</button>
+            <button class="bank-btn" data-bank="CIMB"><span class="blogo">🔴</span>CIMB Clicks</button>
+            <button class="bank-btn" data-bank="RHB"><span class="blogo">🟢</span>RHB Now</button>
+            <button class="bank-btn" data-bank="Public Bank"><span class="blogo">🔵</span>Public Bank</button>
+            <button class="bank-btn" data-bank="Hong Leong"><span class="blogo">⚫</span>Hong Leong</button>
+            <button class="bank-btn" data-bank="Bank Islam"><span class="blogo">🟤</span>Bank Islam</button>
+          </div>
+          <p class="err" id="errBank">Please select a bank.</p>
+          <div class="field">
+            <label for="fpxUser">Online Banking Username</label>
+            <input id="fpxUser" type="text" placeholder="e.g. maybank2u username" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="fpxPass">Password</label>
+            <input id="fpxPass" type="password" placeholder="••••••••" autocomplete="off" />
+          </div>
+          <p class="err" id="errFpx">Please fill in your banking details.</p>
+        </div>
+      </div>
+
+      <!-- E-wallet Panel -->
+      <div class="detail-panel" id="panelEwallet">
+        <div class="pay-section">
+          <h3>Select E-Wallet</h3>
+          <div class="wallet-grid" id="walletGrid">
+            <button class="wallet-btn" data-wallet="Touch n Go"><span class="wlogo">💚</span>Touch 'n Go</button>
+            <button class="wallet-btn" data-wallet="GrabPay"><span class="wlogo">🟢</span>GrabPay</button>
+            <button class="wallet-btn" data-wallet="ShopeePay"><span class="wlogo">🟠</span>ShopeePay</button>
+            <button class="wallet-btn" data-wallet="Boost"><span class="wlogo">🔵</span>Boost</button>
+          </div>
+          <p class="err" id="errWallet">Please select an e-wallet.</p>
+          <div class="field">
+            <label for="ewPhone">Registered Phone Number</label>
+            <input id="ewPhone" type="tel" placeholder="e.g. 0123456789" />
+          </div>
+          <p class="err" id="errEw">Please enter your phone number.</p>
+        </div>
+      </div>
+
+    </main>
+
+    <div class="sticky-footer">
+      <button class="btn" id="payBtn">Pay <span id="payTotal">RM 0.00</span></button>
+    </div>
+  </div>
+
+  <!-- Mock bank/wallet redirect overlay -->
+  <div class="mock-overlay" id="mockOverlay">
+    <div class="mock-box">
+      <div style="font-size:36px" id="mockIcon">🏦</div>
+      <h2 id="mockBank">Maybank2u</h2>
+      <p id="mockDesc">Confirm your payment to Sup Tulang ZZ</p>
+      <div class="mock-amount" id="mockAmount">RM 0.00</div>
+      <button class="btn" id="mockConfirm">Confirm Payment</button>
+      <button class="btn-cancel" id="mockCancel">Cancel</button>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+  document.getElementById("tableSmall").textContent = Table.get() ? ("Table " + Table.get()) : "Walk-in";
+
+  let method = "fpx";
+  let selectedBank = null;
+  let selectedWallet = null;
+
+  // --- Render mini summary from stored order or cart ---
+  function renderSummary() {
+    const order = Order.current();
+    const el = document.getElementById("miniSummary");
+    const items = order ? order.items : Cart.get();
+    const subtotal = order ? order.subtotal : Cart.subtotal();
+    const tax      = order ? order.tax      : Cart.tax();
+    const total    = order ? order.total    : Cart.total();
+
+    let rows = items.map(it => {
+      const label = it.variant_name || (it.variant ? it.variant.name : null);
+      return `<div class="mini-row"><span>${it.qty}× ${it.name}${label ? " ("+label+")" : ""}</span><span>${formatRM((it.unit_price || Cart.unitPrice(it)) * it.qty)}</span></div>`;
+    }).join("");
+
+    rows += `
+      <div class="mini-row"><span class="muted">Subtotal</span><span>${formatRM(subtotal)}</span></div>
+      <div class="mini-row"><span class="muted">SST (6%)</span><span>${formatRM(tax)}</span></div>
+      <div class="mini-row total"><span>Total</span><span>${formatRM(total)}</span></div>`;
+    el.innerHTML = rows;
+    document.getElementById("payTotal").textContent = formatRM(total);
+  }
+
+  // --- Method switch ---
+  function switchMethod(m) {
+    method = m;
+    document.getElementById("btnFpx").classList.toggle("active", m === "fpx");
+    document.getElementById("btnEwallet").classList.toggle("active", m === "ewallet");
+    document.getElementById("panelFpx").classList.toggle("show", m === "fpx");
+    document.getElementById("panelEwallet").classList.toggle("show", m === "ewallet");
+  }
+
+  // --- Bank selection ---
+  document.getElementById("bankGrid").addEventListener("click", e => {
+    const b = e.target.closest(".bank-btn");
+    if (!b) return;
+    document.querySelectorAll(".bank-btn").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    selectedBank = b.dataset.bank;
+    document.getElementById("errBank").style.display = "none";
+  });
+
+  // --- Wallet selection ---
+  document.getElementById("walletGrid").addEventListener("click", e => {
+    const w = e.target.closest(".wallet-btn");
+    if (!w) return;
+    document.querySelectorAll(".wallet-btn").forEach(x => x.classList.remove("active"));
+    w.classList.add("active");
+    selectedWallet = w.dataset.wallet;
+    document.getElementById("errWallet").style.display = "none";
+  });
+
+  // --- Validate & show mock overlay ---
+  document.getElementById("payBtn").addEventListener("click", () => {
+    let valid = true;
+
+    if (method === "fpx") {
+      if (!selectedBank) { document.getElementById("errBank").style.display = "block"; valid = false; }
+      const u = document.getElementById("fpxUser").value.trim();
+      const p = document.getElementById("fpxPass").value.trim();
+      if (!u || !p) { document.getElementById("errFpx").style.display = "block"; valid = false; }
+      else document.getElementById("errFpx").style.display = "none";
+    } else {
+      if (!selectedWallet) { document.getElementById("errWallet").style.display = "block"; valid = false; }
+      const ph = document.getElementById("ewPhone").value.trim();
+      if (!ph) { document.getElementById("errEw").style.display = "block"; valid = false; }
+      else document.getElementById("errEw").style.display = "none";
+    }
+
+    if (!valid) return;
+
+    // Show mock overlay
+    const order = Order.current();
+    const total = order ? order.total : Cart.total();
+    const label = method === "fpx" ? selectedBank : selectedWallet;
+    const icon  = method === "fpx" ? "🏦" : "📱";
+    document.getElementById("mockIcon").textContent = icon;
+    document.getElementById("mockBank").textContent = label;
+    document.getElementById("mockDesc").textContent = `Confirm your payment to Sup Tulang ZZ`;
+    document.getElementById("mockAmount").textContent = formatRM(total);
+    document.getElementById("mockOverlay").classList.add("show");
+  });
+
+  document.getElementById("mockCancel").addEventListener("click", () => {
+    document.getElementById("mockOverlay").classList.remove("show");
+  });
+
+  // --- On confirm: save payment via API then go to receipt ---
+  document.getElementById("mockConfirm").addEventListener("click", async () => {
+    document.getElementById("mockConfirm").disabled = true;
+    document.getElementById("mockConfirm").textContent = "Processing…";
+
+    const order = Order.current();
+    const detail = method === "fpx" ? selectedBank : selectedWallet;
+
+    // First: place order if not yet placed
+    let orderId = order ? order.id : null;
+    if (!orderId) {
+      // Fallback: order wasn't placed yet (shouldn't happen normally)
+      toast("Order not found. Please go back and place your order.");
+      document.getElementById("mockConfirm").disabled = false;
+      document.getElementById("mockConfirm").textContent = "Confirm Payment";
+      document.getElementById("mockOverlay").classList.remove("show");
+      return;
+    }
+
+    // Save payment
+    try {
+      const r = await fetch("api/payment.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: orderId,
+          payment_method: method,
+          payment_detail: detail,
+          amount: order.total,
+        }),
+      });
+      const j = await r.json();
+      if (j && j.ok) {
+        // Save payment info locally for receipt
+        const paymentInfo = {
+          payment_id: j.payment_id,
+          method,
+          detail,
+          paid_at: new Date().toISOString(),
+        };
+        localStorage.setItem("sz_payment", JSON.stringify(paymentInfo));
+        Cart.clear();
+        location.href = "receipt.html";
+        return;
+      }
+    } catch (e) {}
+
+    // Fallback: no backend, still go to receipt
+    localStorage.setItem("sz_payment", JSON.stringify({
+      method, detail, paid_at: new Date().toISOString(),
+    }));
+    Cart.clear();
+    location.href = "receipt.html";
+  });
+
+  renderSummary();
+  </script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d6342b" />
+  <title>Receipt — Sup Tulang ZZ</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Receipt card */
+    .receipt-wrap { padding: 16px; }
+
+    .receipt-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(0,0,0,.08);
+    }
+
+    /* Header band */
+    .receipt-head {
+      background: var(--red);
+      color: #fff;
+      text-align: center;
+      padding: 22px 16px 18px;
+    }
+    .receipt-head .r-logo { font-size: 34px; }
+    .receipt-head h1 { font-size: 20px; margin: 6px 0 2px; letter-spacing: .02em; }
+    .receipt-head p  { font-size: 12px; opacity: .85; margin: 0; }
+
+    /* Zigzag tear */
+    .tear {
+      height: 14px;
+      background:
+        radial-gradient(circle at 50% 0%, #fff 7px, transparent 7px) 0 0 / 20px 14px repeat-x,
+        var(--red);
+    }
+
+    /* Body */
+    .receipt-body { padding: 18px 18px 6px; }
+
+    .r-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+
+    .r-divider { border: none; border-top: 1px dashed var(--line); margin: 12px 0; }
+
+    .r-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
+    .r-row .r-name { flex: 1; padding-right: 10px; }
+    .r-row .r-meta-item { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
+    .r-row .r-price { font-weight: 700; white-space: nowrap; }
+
+    .r-totals { background: #fafafa; border-radius: 10px; padding: 12px 14px; margin: 12px 0; }
+    .r-total-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+    .r-total-row:last-child { margin-bottom: 0; }
+    .r-total-row.grand { font-weight: 800; font-size: 17px; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 6px; }
+    .r-total-row .muted { color: var(--muted); }
+
+    /* Payment badge */
+    .pay-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #e8f5e9; color: #2e7d32;
+      border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 700;
+      margin: 4px 0 14px;
+    }
+
+    /* Status */
+    .r-status-row { text-align: center; padding: 14px 0 10px; }
+    .r-status-row .status-pill { font-size: 14px; padding: 6px 18px; }
+
+    /* Footer */
+    .receipt-foot { text-align: center; padding: 14px 16px 20px; font-size: 12px; color: var(--muted); }
+    .receipt-foot strong { display: block; font-size: 14px; color: var(--red); margin-bottom: 4px; }
+
+    /* Bottom tear (upside down) */
+    .tear-bottom {
+      height: 14px;
+      background:
+        radial-gradient(circle at 50% 100%, #fff 7px, transparent 7px) 0 100% / 20px 14px repeat-x,
+        #fafafa;
+    }
+
+    /* Buttons */
+    .receipt-actions { display: flex; flex-direction: column; gap: 10px; padding: 16px 0 0; }
+
+    /* Print override */
+    @media print {
+      .header, .receipt-actions, .sticky-footer { display: none !important; }
+      .receipt-card { box-shadow: none; border: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <span></span>
+      <div class="title">Receipt</div>
+      <span></span>
+    </header>
+
+    <main class="page receipt-wrap" id="page">
+      <p class="muted2" style="text-align:center;padding:40px 0">Loading receipt…</p>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+  const pageEl = document.getElementById("page");
+
+  function fmtDateTime(str) {
+    if (!str) return "—";
+    const d = new Date(str);
+    return d.toLocaleDateString("en-MY", { day: "2-digit", month: "short", year: "numeric" })
+         + " " + d.toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function methodLabel(method, detail) {
+    if (method === "fpx")     return "🏦 " + detail + " (FPX)";
+    if (method === "ewallet") return "📱 " + detail;
+    return detail || method;
+  }
+
+  function render(order, payment) {
+    if (!order) {
+      pageEl.innerHTML = `<div class="empty"><div class="big">🧾</div><p>No receipt found.</p><a class="btn" href="menu.html">Back to Menu</a></div>`;
+      return;
+    }
+
+    const items   = order.items || [];
+    const payment_method = payment ? payment.method : "—";
+    const payment_detail = payment ? payment.detail : "—";
+    const paid_at = payment ? payment.paid_at : null;
+
+    let itemRows = items.map(it => {
+      const label = it.variant_name || (it.variant ? it.variant.name : null);
+      const addons = it.addons_text || (it.addons ? it.addons.map(a => a.name).join(", ") : null);
+      const price = (it.unit_price || Cart.unitPrice(it)) * it.qty;
+      return `
+        <div class="r-row">
+          <div class="r-name">
+            <span>${it.qty}× ${it.name}</span>
+            ${label || addons ? `<span class="r-meta-item">${[label, addons].filter(Boolean).join(" · ")}</span>` : ""}
+          </div>
+          <div class="r-price">${formatRM(price)}</div>
+        </div>`;
+    }).join("");
+
+    const statusText = {
+      pending:    "Pending",
+      in_progress:"In Progress",
+      preparing:  "Preparing",
+      ready:      "Ready",
+      completed:  "Completed",
+    }[order.status] || order.status;
+
+    pageEl.innerHTML = `
+      <div class="receipt-card">
+
+        <div class="receipt-head">
+          <div class="r-logo">🍲</div>
+          <h1>SUP TULANG ZZ</h1>
+          <p>Sup Tulang &amp; Masakan Panas · Pasir Gudang</p>
+        </div>
+
+        <div class="tear"></div>
+
+        <div class="receipt-body">
+          <div class="r-meta">
+            <span>Order <strong style="color:var(--red)">#${order.id}</strong></span>
+            <span>${order.table_no || order.table ? "Table " + (order.table_no || order.table) : "Walk-in"}</span>
+          </div>
+          <div class="r-meta" style="margin-top:-8px">
+            <span>${order.customer_name || order.customerName || ""}</span>
+            <span>${fmtDateTime(paid_at || order.created_at)}</span>
+          </div>
+
+          <hr class="r-divider" />
+
+          ${itemRows}
+
+          <div class="r-totals">
+            <div class="r-total-row"><span class="muted">Subtotal</span><span>${formatRM(order.subtotal)}</span></div>
+            <div class="r-total-row"><span class="muted">SST (6%)</span><span>${formatRM(order.tax)}</span></div>
+            <div class="r-total-row grand"><span>Total</span><span>${formatRM(order.total)}</span></div>
+          </div>
+
+          <div>
+            <span class="pay-badge">✅ Paid · ${methodLabel(payment_method, payment_detail)}</span>
+          </div>
+
+          <div class="r-status-row">
+            <div class="muted2" style="font-size:12px;margin-bottom:6px">Order Status</div>
+            <span class="status-pill ${order.status}">${statusText}</span>
+          </div>
+        </div>
+
+        <div class="tear-bottom"></div>
+
+        <div class="receipt-foot">
+          <strong>Thank you for dining with us! 🙏</strong>
+          Your order has been sent to the kitchen.<br>
+          We'll notify you when it's ready.
+        </div>
+      </div>
+
+      <div class="receipt-actions">
+        <button class="btn secondary" onclick="window.print()">🖨️ Print Receipt</button>
+        <a class="btn" href="tracking.html">Track My Order →</a>
+      </div>
+    `;
+  }
+
+  async function init() {
+    const order   = Order.current();
+    const payRaw  = localStorage.getItem("sz_payment");
+    const payment = payRaw ? JSON.parse(payRaw) : null;
+
+    if (!order) { render(null, null); return; }
+
+    // Try to fetch fresh order from API (to get latest status + items)
+    try {
+      const r = await fetch("api/orders.php?id=" + encodeURIComponent(order.id), { cache: "no-store" });
+      if (r.ok) {
+        const fresh = await r.json();
+        if (fresh && fresh.id) {
+          // Merge remote data with local payment info
+          render(fresh, payment);
+          return;
+        }
+      }
+    } catch (e) {}
+
+    // Fallback to local data
+    render(order, payment);
+  }
+
+  init();
+  </script>
+</body>
+</html>
