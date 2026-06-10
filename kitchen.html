@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kitchen / Waiter — Sup Tulang ZZ</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .app { max-width: 760px; }
+
+    /* Header extras */
+    .staff-info { font-size: 13px; color: #fff; opacity: .85; }
+    .logout-btn {
+      background: rgba(255,255,255,.2); border: none; color: #fff;
+      padding: 6px 12px; border-radius: 8px; font-size: 13px;
+      font-weight: 700; cursor: pointer;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,.35); }
+
+    /* Role badge */
+    .role-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .05em; margin-left: 8px;
+    }
+    .role-badge.kitchen { background: #fff3e0; color: #e65100; }
+    .role-badge.waiter  { background: #e8f5e9; color: #2e7d32; }
+
+    /* Order cards */
+    .staff-grid { display: grid; gap: 12px; }
+    .ord {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 14px;
+      box-shadow: var(--shadow);
+      transition: border-color .2s;
+    }
+    .ord.is-ready { border-color: #4caf50; }
+
+    .ord .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ord .oid { font-weight: 800; color: var(--red); font-size: 15px; }
+    .ord .lines { margin: 8px 0; font-size: 14px; }
+    .ord .lines li { margin: 2px 0; }
+    .muted2 { color: var(--muted); font-size: 12px; }
+
+    /* Action buttons */
+    .ord .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .ord .acts button {
+      flex: 1; min-width: 110px; padding: 10px;
+      border-radius: 10px; font-weight: 700; font-size: 13px;
+      border: 1px solid var(--line); background: #fff; cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .ord .acts button.on  { background: var(--red); color: #fff; border-color: var(--red); }
+    .ord .acts button.complete-btn {
+      background: #4caf50; color: #fff; border-color: #4caf50;
+    }
+    .ord .acts button:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* Ready alert banner */
+    .ready-alert {
+      display: none;
+      background: #e8f5e9; border: 1px solid #a5d6a7;
+      border-radius: 10px; padding: 12px 16px;
+      font-size: 14px; color: #2e7d32; font-weight: 600;
+      margin-bottom: 14px; text-align: center;
+    }
+    .ready-alert.show { display: block; }
+
+    /* Clock */
+    .clock { color: #fff; font-size: 13px; opacity: .85; }
+
+    /* Empty */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .empty-state .big { font-size: 40px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header" style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span style="font-weight:800;color:#fff;font-size:16px">Sup Tulang ZZ</span>
+        <span class="role-badge" id="roleBadge">—</span>
+      </div>
+      <span class="clock" id="clock"></span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="staff-info" id="staffName"></span>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+      </div>
+    </header>
+
+    <main class="page">
+      <!-- Ready alert for waiter -->
+      <div class="ready-alert" id="readyAlert">
+        🔔 One or more orders are <strong>Ready</strong> — please deliver to the table!
+      </div>
+
+      <div class="note-banner" id="roleBanner" style="margin:0 0 12px">
+        Loading…
+      </div>
+
+      <div class="staff-grid" id="grid">
+        <p class="muted2">Loading orders…</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+  const STATUSES = ["pending", "preparing", "ready", "completed"];
+  const LABEL    = { pending: "Pending", preparing: "Preparing", ready: "Ready", completed: "Completed" };
+
+  let currentRole = null;
+  let currentName = null;
+  let prevReadyIds = new Set();
+
+  // Check session
+  async function checkAuth() {
+    try {
+      const r = await fetch("api/staff_auth.php", { cache: "no-store" });
+      const j = await r.json();
+      if (!j || !j.loggedIn) {
+        location.href = "staff-login.html";
+        return false;
+      }
+      currentRole = j.role;
+      currentName = j.name;
+      return true;
+    } catch (e) {
+      // No backend — allow demo mode with role prompt
+      const role = prompt("Demo mode: enter role (kitchen / waiter)") || "kitchen";
+      currentRole = role;
+      currentName = role === "kitchen" ? "Kitchen Staff" : "Waiter";
+      return true;
+    }
+  }
+
+  function setupHeader() {
+    document.getElementById("staffName").textContent  = currentName;
+    document.getElementById("roleBadge").textContent  = currentRole === "kitchen" ? "👨‍🍳 Kitchen" : "🛎️ Waiter";
+    document.getElementById("roleBadge").className    = "role-badge " + currentRole;
+
+    if (currentRole === "kitchen") {
+      document.getElementById("roleBanner").textContent = "👨‍🍳 Kitchen view — update order status as you prepare each order.";
+    } else {
+      document.getElementById("roleBanner").textContent = "🛎️ Waiter view — you'll be alerted when orders are ready. Mark as Completed after delivery.";
+    }
+  }
+
+  function lineText(it) {
+    const extra = [it.variant_name, it.addons_text].filter(Boolean).join(", ");
+    return `${it.qty}× ${it.name}${extra ? " (" + extra + ")" : ""}${it.notes ? " — "${it.notes}"" : ""}`;
+  }
+
+  function renderOrders(orders) {
+    const grid = document.getElementById("grid");
+
+    // Check for newly ready orders (waiter alert)
+    if (currentRole === "waiter") {
+      const readyOrders  = orders.filter(o => o.status === "ready");
+      const newReadyIds  = new Set(readyOrders.map(o => o.id));
+      const hasNewReady  = readyOrders.some(o => !prevReadyIds.has(o.id));
+
+      if (hasNewReady && prevReadyIds.size > 0) {
+        // Play a beep if possible
+        try {
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+          osc.start(); osc.stop(ctx.currentTime + 0.6);
+        } catch (e) {}
+      }
+
+      prevReadyIds = newReadyIds;
+      document.getElementById("readyAlert").classList.toggle("show", readyOrders.length > 0);
+    }
+
+    // Filter: kitchen sees pending/preparing/ready; waiter sees all
+    const visible = currentRole === "kitchen"
+      ? orders.filter(o => o.status !== "completed")
+      : orders;
+
+    if (!visible.length) {
+      grid.innerHTML = `<div class="empty-state"><div class="big">${currentRole === "kitchen" ? "🍳" : "🛎️"}</div><p>No active orders right now.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = visible.map(o => {
+      const isReady = o.status === "ready";
+
+      // Kitchen: show Pending / Preparing / Ready buttons (no Completed)
+      // Waiter: read-only status + Completed button only if Ready
+      let actionsHTML = "";
+
+      if (currentRole === "kitchen") {
+        const kitchenStatuses = ["pending", "preparing", "ready"];
+        actionsHTML = `<div class="acts">
+          ${kitchenStatuses.map(s => `
+            <button class="${s === o.status ? "on" : ""}" data-id="${o.id}" data-s="${s}">
+              ${LABEL[s]}
+            </button>`).join("")}
+        </div>`;
+      } else {
+        // Waiter
+        actionsHTML = `<div class="acts">
+          ${isReady ? `<button class="complete-btn" data-id="${o.id}" data-s="completed">✅ Mark Completed</button>` : `<span class="muted2">Waiting for kitchen…</span>`}
+        </div>`;
+      }
+
+      return `
+        <div class="ord ${isReady ? "is-ready" : ""}">
+          <div class="top">
+            <span class="oid">#${o.id}</span>
+            <span class="status-pill ${o.status}">${LABEL[o.status]}</span>
+          </div>
+          <div class="muted2">
+            ${o.table_no ? "Table " + o.table_no : "Online Order"}
+            ${o.customer_name ? " · " + o.customer_name : ""}
+            · ${o.created_at || ""}
+          </div>
+          <ul class="lines">${(o.items || []).map(it => `<li>${lineText(it)}</li>`).join("")}</ul>
+          ${o.note ? `<div class="muted2">Note: ${o.note}</div>` : ""}
+          <div style="font-weight:800;margin-top:6px">${formatRM(o.total)}</div>
+          ${actionsHTML}
+        </div>`;
+    }).join("");
+  }
+
+  async function load() {
+    try {
+      const r = await fetch("api/orders.php", { cache: "no-store" });
+      if (!r.ok) throw 0;
+      const orders = await r.json();
+      renderOrders(orders);
+    } catch (e) {
+      document.getElementById("grid").innerHTML = `
+        <div class="note-banner">⚠️ Can't reach the backend. Make sure XAMPP is running.</div>`;
+    }
+  }
+
+  // Status update (works for both kitchen and waiter)
+  document.getElementById("grid").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-s]");
+    if (!b) return;
+    b.disabled = true;
+    try {
+      await fetch("api/order_status.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: b.dataset.id, status: b.dataset.s }),
+      });
+    } catch (e) {}
+    load();
+  });
+
+  // Logout
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    try {
+      await fetch("api/staff_auth.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "logout" }),
+      });
+    } catch (e) {}
+    location.href = "staff-login.html";
+  });
+
+  // Clock
+  function tick() { document.getElementById("clock").textContent = new Date().toLocaleTimeString(); }
+  setInterval(tick, 1000); tick();
+
+  // Init
+  (async () => {
+    const ok = await checkAuth();
+    if (!ok) return;
+    setupHeader();
+    load();
+    setInterval(load, 5000);
+  })();
+  </script>
+</body>
+</html>
