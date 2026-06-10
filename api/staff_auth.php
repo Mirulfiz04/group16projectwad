@@ -1,7 +1,5 @@
 <?php
-/* /api/staff_auth.php
-   POST { action: 'login', email, password } -> { ok, role, name }
-   GET                                       -> { ok: true }           */
+/* /api/staff_auth.php - simple version, plain text password check */
 
 require __DIR__ . '/_bootstrap.php';
 
@@ -12,7 +10,6 @@ if ($method === 'GET') {
     json_out(['ok' => true]);
 }
 
-// POST only
 $b      = json_body();
 $action = $b['action'] ?? '';
 
@@ -32,7 +29,11 @@ if ($action === 'login') {
         json_out(['error' => 'invalid_credentials'], 401);
     }
 
-    if (!password_verify($password, $staff['password'])) {
+    // Try hashed first, then plain text fallback
+    $match = password_verify($password, $staff['password'])
+          || $password === $staff['password'];
+
+    if (!$match) {
         json_out(['error' => 'invalid_credentials'], 401);
     }
 
