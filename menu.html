@@ -135,7 +135,7 @@
     });
 
     if (!shown) {
-      html = `<div class="empty"><div class="big">🔍</div>No dishes found${q ? ` for “${query}”` : ""}.</div>`;
+      html = `<div class="empty"><div class="big">🔍</div>No dishes found${q ? ` for "${query}"` : ""}.</div>`;
     }
     menuEl.innerHTML = html;
   }
@@ -156,11 +156,14 @@
   });
   searchEl.addEventListener("input", () => { query = searchEl.value; renderMenu(); });
 
-  /* If an item has no options, the + button adds it straight away.
+  /* If an item has no options AND no add-ons, the + button adds it straight away.
      Otherwise it opens the modal so the customer can choose. */
   function quickOrOpen(id) {
     const m = MENU.find(x => x.id === id);
-    if ((m.variants && m.variants.length)) { openSheet(id); return; }
+    if ((m.variants && m.variants.length) || (m.addons && m.addons.length)) {
+      openSheet(id);
+      return;
+    }
     Cart.add({
       id: m.id, name: m.name, emoji: m.emoji, img: m.img || null,
       basePrice: m.price, variant: null, addons: [], notes: "", qty: 1,
@@ -171,7 +174,7 @@
 
   /* ===================== Modal logic ===================== */
   const overlay = document.getElementById("overlay");
-  let current = null;     // the menu item being configured
+  let current = null;
   let qty = 1;
   let chosenVariant = null;
   let chosenAddons = [];
@@ -288,7 +291,7 @@
 
   /* ===================== Init ===================== */
   (async () => {
-    await syncMenuFromAPI();   // use DB menu if the PHP backend is running; else built-in
+    await syncMenuFromAPI();
     renderCats();
     renderMenu();
     updateCartbar();
