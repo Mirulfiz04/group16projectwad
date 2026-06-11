@@ -1,15 +1,15 @@
 <?php
-/* /api/online_order.php
-   POST -> place an online order, save payment, send confirmation email
-   Body: {
-     customer_name, customer_email, customer_phone,
-     delivery_address, delivery_type (delivery|pickup),
-     note, payment_method, payment_detail,
-     items: [ {id, name, emoji, basePrice, variant, addons, notes, qty} ]
-   }
-   Returns: { ok, id, payment_id, subtotal, tax, total }                  */
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 require __DIR__ . '/_bootstrap.php';
+error_log(print_r(debug_backtrace(), true));
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+require_once __DIR__ . '/../src/Exception.php';
+require_once __DIR__ . '/../src/PHPMailer.php';
+require_once __DIR__ . '/../src/SMTP.php';
 
 $cfg    = require __DIR__ . '/../backend/config.php';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -69,7 +69,7 @@ $pdo->beginTransaction();
 
 // Insert order
 $pdo->prepare("INSERT INTO orders
-    (id, order_type, table_id, customer_name, customer_email, customer_phone,
+    (id, order_type, table_no, customer_name, customer_email, customer_phone,
      delivery_address, note, subtotal, tax, total, status, created_at, updated_at)
     VALUES (?, 'online', NULL, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)")
     ->execute([
@@ -97,7 +97,11 @@ $payment_id = $pdo->lastInsertId();
 $pdo->commit();
 
 // Send confirmation email
-send_confirmation_email($email, $name, $id, $lines, $subtotal, $tax, $total);
+try {
+    send_confirmation_email($email, $name, $id, $lines, $subtotal, $tax, $total);
+} catch (Throwable $e) {
+    // Email failed but order already saved
+}
 
 json_out([
     'ok'         => true,
@@ -196,11 +200,38 @@ function send_confirmation_email(
           . "Total: RM {$total_fmt}\n\n"
           . "Thank you for ordering from Sup Tulang ZZ!";
 
-    $headers  = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: Sup Tulang ZZ <no-reply@suptulangzz.com>\r\n";
+$mail = new PHPMailer(true);
 
-    // mail() works on a live server; on localhost (XAMPP) it silently fails
-    // unless you configure php.ini sendmail_path or use an SMTP library.
-    @mail($to, $subject, $html, $headers);
+try {
+
+    $mail->isSMTP();
+    $mail->Host       = 'smtp.gmail.com';
+    $mail->SMTPAuth   = true;
+
+    $mail->Username   = 'nurainfarahin4@gmail.com';
+    $mail->Password   = 'iocjvqynbqlxvndm';
+
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port       = 587;
+
+    $mail->setFrom(
+        'nurainfarahin4@gmail.com',
+        'Sup Tulang ZZ'
+    );
+
+    $mail->addAddress($to, $name);
+
+    $mail->isHTML(true);
+    $mail->Subject = $subject;
+    $mail->Body    = $html;
+    $mail->AltBody = $text;
+
+    $mail->send();
+
+} catch (Exception $e) {
+
+    error_log(
+        'Mailer Error: ' . $mail->ErrorInfo
+    );
+}
 }
