@@ -35,7 +35,12 @@ def lan_ip():
 
 
 def main():
-    default_base = f"http://{lan_ip()}:8000/index.html"
+    # Default = localhost on VS Code Live Server's port (5500). Stable for a
+    # demo on this PC. For real phone scanning, pass your LAN IP instead, e.g.:
+    #   python tools/generate_qr.py --base http://%s:5500/index.html
+    # (your current LAN IP is shown above) or use a GitHub Pages URL.
+    default_base = "http://127.0.0.1:5500/index.html"
+    _ = lan_ip  # kept for reference; LAN IP is needed only for phone scanning
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default=default_base,
                     help="Landing page URL (table number is appended). Default: %(default)s")
