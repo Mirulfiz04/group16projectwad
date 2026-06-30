@@ -29,7 +29,9 @@
       <div style="height:10px"></div>
       <a class="btn secondary" href="cart.html">View My Cart</a>
 
-      <p id="footNote" style="text-align:center;color:var(--muted);font-size:12px;margin-top:24px">
+      <p id="modeSwitch" style="text-align:center;font-size:13px;margin-top:16px"></p>
+
+      <p id="footNote" style="text-align:center;color:var(--muted);font-size:12px;margin-top:14px">
         Dine-in self-ordering · No app download needed
       </p>
     </div>
@@ -39,34 +41,70 @@
   <script src="js/cart.js"></script>
   <script>
     const params = new URLSearchParams(location.search);
-    const table  = params.get("table");
-    if (table) {
-      Table.set(table);
+
+    // A table is ONLY set by scanning the QR code on a table (index.html?table=7).
+    // Accept a real table number only — ignore empty/junk values like "?table=" or
+    // "?table=abc" so an online order can never be bound to a bogus table.
+    const rawTable = (params.get("table") || "").trim();
+    const isValidTable = /^\d{1,3}$/.test(rawTable) && Number(rawTable) > 0;
+
+    if (isValidTable) {
+      Table.set(rawTable);
     } else {
-      localStorage.removeItem("sz_table");
+      // No valid table in the URL → make sure no table from a previous visit
+      // leaks into this session (this is what caused online orders to sometimes
+      // show up as a "Table N" dine-in order).
+      Table.clear();
     }
+
     const t = Table.get();
+    const pill       = document.querySelector(".table-pill");
+    const footNote   = document.getElementById("footNote");
+    const modeSwitch = document.getElementById("modeSwitch");
 
     if (t) {
-      // Walk-in
-      document.getElementById("tableLabel").closest(".table-pill").innerHTML = "🍽️ <span>Table " + t + "</span>";
-      document.getElementById("footNote").textContent = "Dine-in self-ordering · No app download needed";
+      // ---- Dine-in (table) mode ----
+      pill.innerHTML = "🍽️ <span>Table " + t + "</span>";
+      footNote.textContent = "Dine-in self-ordering · No app download needed";
+
+      // Safety valve: if someone reached this page with a leftover/restored
+      // table in the URL but actually wants to order online, let them switch
+      // cleanly instead of being silently stuck in dine-in.
+      modeSwitch.innerHTML =
+        'Not at the restaurant? <a href="#" id="goOnline" style="color:var(--red);font-weight:700">Order online instead →</a>';
     } else {
-      // Online — clear all previous order data for fresh session
+      // ---- Online mode ---- start a clean session so nothing carries over
       localStorage.removeItem("sz_current_order");
       localStorage.removeItem("sz_payment");
       localStorage.removeItem("sz_online_order");
       localStorage.removeItem("sz_checkout");
       localStorage.removeItem("sz_cart");
 
-      document.getElementById("tableLabel").closest(".table-pill").innerHTML = "🌐 <span>Online Order</span>";
+      pill.innerHTML = "🌐 <span>Online Order</span>";
       document.getElementById("steps").innerHTML = `
         <li><span class="num">1</span><div><strong>Browse the menu</strong><span>Tap any dish to see details &amp; options.</span></div></li>
         <li><span class="num">2</span><div><strong>Add to cart</strong><span>Pick your add-ons, quantity and notes.</span></div></li>
         <li><span class="num">3</span><div><strong>Fill in your details</strong><span>Enter your name, address and contact.</span></div></li>
         <li><span class="num">4</span><div><strong>Pay &amp; confirm</strong><span>Pay online and get a confirmation email.</span></div></li>
       `;
-      document.getElementById("footNote").textContent = "Online ordering · Delivery & self pickup available";
+      footNote.textContent = "Online ordering · Delivery & self pickup available";
+      modeSwitch.innerHTML =
+        'At our restaurant? Scan the QR code on your table to order as dine-in.';
+      modeSwitch.style.color = "var(--muted)";
+    }
+
+    // Drop the table binding and reload as a fresh online order.
+    const goOnline = document.getElementById("goOnline");
+    if (goOnline) {
+      goOnline.addEventListener("click", (e) => {
+        e.preventDefault();
+        Table.clear();
+        // Clear any in-progress dine-in cart/order so online starts clean.
+        ["sz_cart", "sz_current_order", "sz_payment", "sz_online_order", "sz_checkout"]
+          .forEach(k => localStorage.removeItem(k));
+        // Reload without the ?table= param so we re-enter in online mode.
+        location.replace(location.pathname);
+      });
     }
   </script>
 </body>
