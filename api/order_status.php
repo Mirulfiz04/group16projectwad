@@ -17,14 +17,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $status = $b['status'] ?? '';
     if (!in_array($status, VALID, true)) json_out(['error' => 'bad_status'], 400);
 
-    $stmt = $pdo->prepare("UPDATE orders SET status = ?, updated_at = ? WHERE id = ?");
-    $stmt->execute([$status, date('Y-m-d H:i:s'), $id]);
-    if ($stmt->rowCount() === 0) {
-        // rowCount can be 0 if status was unchanged; confirm the order exists.
-        $chk = $pdo->prepare("SELECT 1 FROM orders WHERE id = ?");
-        $chk->execute([$id]);
-        if (!$chk->fetchColumn()) json_out(['error' => 'not_found'], 404);
-    }
+    // Read the current status first so we only log a real change.
+    $cur = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
+    $cur->execute([$id]);
+    $old = $cur->fetchColumn();
+    if ($old === false) json_out(['error' => 'not_found'], 404);
+
+    $pdo->prepare("UPDATE orders SET status = ?, updated_at = ? WHERE id = ?")
+        ->execute([$status, date('Y-m-d H:i:s'), $id]);
+
+    if ($old !== $status) record_status($pdo, $id, $status);
+
     json_out(['ok' => true, 'id' => $id, 'status' => $status]);
 }
 
@@ -34,4 +37,14 @@ $stmt = $pdo->prepare("SELECT id, status, table_no, total, created_at, updated_a
 $stmt->execute([$id]);
 $row = $stmt->fetch();
 if (!$row) json_out(['error' => 'not_found'], 404);
+
+// Include the latest payment so the tracking page can reflect "paid at counter".
+$p = $pdo->prepare("SELECT payment_method, payment_detail, status, paid_at
+                    FROM payments WHERE order_id = ? ORDER BY id DESC LIMIT 1");
+$p->execute([$id]);
+$row['payment'] = $p->fetch() ?: null;
+
+// Real status timeline (oldest first) so the tracker shows accurate times.
+$row['history'] = fetch_status_history($pdo, $id);
+
 json_out($row);

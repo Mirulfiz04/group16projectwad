@@ -70,15 +70,35 @@ if ($method === 'POST') {
         $li->execute([$id, $l['item_id'], $l['name'], $l['variant_name'],
                       $l['addons_text'], $l['notes'], $l['unit_price'], $l['qty']]);
     }
+
+    // Start the status timeline.
+    record_status($pdo, $id, 'pending');
+
+    // Record how the dine-in customer chose to pay (counter / online).
+    // pay_status is 'paid' (online done) or 'unpaid' (pay at counter).
+    $pay_method = trim($body['payment_method'] ?? '');   // counter | fpx | ewallet
+    $pay_detail = trim($body['payment_detail'] ?? '');   // bank/wallet name, or "Pay at counter"
+    $pay_status = trim($body['payment_status'] ?? '');   // paid | unpaid
+    if ($pay_method !== '') {
+        $paid_at = $pay_status === 'paid' ? $now : null;
+        $pdo->prepare("INSERT INTO payments
+            (order_id, payment_method, payment_detail, amount, status, paid_at)
+            VALUES (?,?,?,?,?,?)")
+            ->execute([$id, $pay_method, $pay_detail, $total,
+                       $pay_status !== '' ? $pay_status : 'unpaid', $paid_at]);
+    }
+
     $pdo->commit();
 
     json_out([
-        'ok'       => true,
-        'id'       => $id,
-        'status'   => 'pending',
-        'subtotal' => round($subtotal, 2),
-        'tax'      => $tax,
-        'total'    => $total,
+        'ok'             => true,
+        'id'             => $id,
+        'status'         => 'pending',
+        'subtotal'       => round($subtotal, 2),
+        'tax'            => $tax,
+        'total'          => $total,
+        'payment_method' => $pay_method,
+        'payment_status' => $pay_status !== '' ? $pay_status : ($pay_method !== '' ? 'unpaid' : ''),
     ]);
 }
 
@@ -91,13 +111,15 @@ if ($id) {
     $o->execute([$id]);
     $order = $o->fetch();
     if (!$order) json_out(['error' => 'not_found'], 404);
-    $order['items'] = fetch_items($pdo, $id);
+    $order['items']   = fetch_items($pdo, $id);
+    $order['payment'] = fetch_payment($pdo, $id);
     json_out($order);
 }
 
 $orders = $pdo->query("SELECT * FROM orders ORDER BY created_at DESC, id DESC")->fetchAll();
 foreach ($orders as &$ord) {
-    $ord['items'] = fetch_items($pdo, $ord['id']);
+    $ord['items']   = fetch_items($pdo, $ord['id']);
+    $ord['payment'] = fetch_payment($pdo, $ord['id']);
 }
 json_out($orders);
 
@@ -107,4 +129,14 @@ function fetch_items(PDO $pdo, string $orderId): array
                         FROM order_items WHERE order_id = ?");
     $s->execute([$orderId]);
     return $s->fetchAll();
+}
+
+/* Latest payment for an order (method + paid/unpaid), or null if none recorded. */
+function fetch_payment(PDO $pdo, string $orderId): ?array
+{
+    $s = $pdo->prepare("SELECT payment_method, payment_detail, status, paid_at
+                        FROM payments WHERE order_id = ? ORDER BY id DESC LIMIT 1");
+    $s->execute([$orderId]);
+    $p = $s->fetch();
+    return $p ?: null;
 }

@@ -95,6 +95,10 @@
           <button class="method-btn" id="btnEwallet" onclick="switchMethod('ewallet')">
             <span class="icon">📱</span>E-Wallet
           </button>
+          <!-- Dine-in only: revealed by JS when ordering from a table -->
+          <button class="method-btn" id="btnCounter" onclick="switchMethod('counter')" style="display:none">
+            <span class="icon">🧾</span>Pay at Counter
+          </button>
         </div>
       </div>
 
@@ -142,6 +146,20 @@
         </div>
       </div>
 
+      <!-- Counter Panel (dine-in only) -->
+      <div class="detail-panel" id="panelCounter">
+        <div class="pay-section">
+          <div class="mini-summary" style="text-align:center">
+            <div style="font-size:32px;margin-bottom:6px">🧾</div>
+            <strong>Pay at the counter</strong>
+            <p style="font-size:13px;margin:8px 0 0;color:var(--muted)">
+              Your order will be sent to the kitchen now. Please pay with cash
+              or card at the counter — staff will mark it as paid.
+            </p>
+          </div>
+        </div>
+      </div>
+
     </main>
 
     <div class="sticky-footer">
@@ -164,6 +182,10 @@
   <script src="js/data.js"></script>
   <script src="js/cart.js"></script>
   <script>
+
+  // Dine-in (a table is set) vs online. Drives the "Pay at Counter" option
+  // and where the order is sent after payment.
+  const isTable = !!Table.get();
 
   let method = "fpx";
   let selectedBank = null;
@@ -201,8 +223,18 @@
     method = m;
     document.getElementById("btnFpx").classList.toggle("active", m === "fpx");
     document.getElementById("btnEwallet").classList.toggle("active", m === "ewallet");
+    const btnCounter = document.getElementById("btnCounter");
+    if (btnCounter) btnCounter.classList.toggle("active", m === "counter");
+
     document.getElementById("panelFpx").classList.toggle("show", m === "fpx");
     document.getElementById("panelEwallet").classList.toggle("show", m === "ewallet");
+    document.getElementById("panelCounter").classList.toggle("show", m === "counter");
+
+    // "Pay at counter" just confirms the order — it doesn't take payment now.
+    const payBtn = document.getElementById("payBtn");
+    payBtn.innerHTML = (m === "counter")
+      ? `Place Order · <span id="payTotal">${formatRM(Cart.total())}</span>`
+      : `Pay <span id="payTotal">${formatRM(Cart.total())}</span>`;
   }
 
   // --- Bank selection ---
@@ -227,6 +259,13 @@
 
   // --- Validate & show mock overlay ---
   document.getElementById("payBtn").addEventListener("click", () => {
+    // Dine-in "Pay at Counter": no online payment — send the order to the
+    // kitchen now as unpaid; staff collect payment at the counter.
+    if (method === "counter") {
+      placeTableOrder({ method: "counter", detail: "Pay at counter", status: "unpaid" });
+      return;
+    }
+
     let valid = true;
 
     if (method === "fpx") {
@@ -264,7 +303,14 @@
     document.getElementById("mockConfirm").disabled = true;
     document.getElementById("mockConfirm").textContent = "Processing…";
 
-    const detail   = method === "fpx" ? selectedBank : selectedWallet;
+    const detail = method === "fpx" ? selectedBank : selectedWallet;
+
+    // Dine-in paid online → place via orders.php and go to live tracking.
+    if (isTable) {
+      placeTableOrder({ method, detail, status: "paid" });
+      return;
+    }
+
     const checkout = JSON.parse(localStorage.getItem("sz_checkout") || "{}");
 
     try {
@@ -319,6 +365,72 @@
     localStorage.removeItem("sz_checkout");
     location.href = "order-confirmation.html";
   });
+
+  // --- Place a dine-in order after the payment choice, then go to tracking ---
+  async function placeTableOrder(pay) {
+    const items = Cart.get();
+    if (!items.length) { toast("Your cart is empty"); return; }
+
+    const info = JSON.parse(localStorage.getItem("sz_table_info") || "{}");
+    const payload = {
+      table:          Table.get(),
+      customerName:   info.name || "",
+      note:           info.note || "",
+      payment_method: pay.method,
+      payment_detail: pay.detail,
+      payment_status: pay.status,
+      items: items.map(it => ({
+        id: it.id, name: it.name, emoji: it.emoji, img: it.img,
+        basePrice: it.basePrice, variant: it.variant, addons: it.addons,
+        notes: it.notes, qty: it.qty,
+      })),
+    };
+
+    let placed = null;
+    try {
+      const r = await fetch("api/orders.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (r.ok) { const j = await r.json(); if (j && j.id) placed = j; }
+    } catch (e) { /* no backend — fall back to a local order below */ }
+
+    const now = Date.now();
+    const order = {
+      id:           placed ? placed.id : "SZ" + String(now).slice(-6),
+      table:        Table.get() || "—",
+      customerName: info.name || "",
+      note:         info.note || "",
+      items,
+      subtotal:     placed ? placed.subtotal : Cart.subtotal(),
+      tax:          placed ? placed.tax      : Cart.tax(),
+      total:        placed ? placed.total    : Cart.total(),
+      status:       "pending",
+      placedAt:     now,
+      history:      [{ status: "pending", at: now }],
+      payment:      { method: pay.method, detail: pay.detail, status: pay.status },
+      remote:       !!placed,   // poll the API when saved on the server
+    };
+
+    localStorage.setItem("sz_current_order", JSON.stringify(order));
+    Orders.add(order);   // keep it in the list so earlier orders stay trackable
+    localStorage.setItem("sz_payment", JSON.stringify({
+      method: pay.method, detail: pay.detail, status: pay.status,
+      paid_at: pay.status === "paid" ? new Date().toISOString() : null,
+    }));
+    Cart.clear();
+    localStorage.removeItem("sz_table_info");
+    location.href = "tracking.html";
+  }
+
+  // --- Dine-in setup: offer "Pay at Counter" and default to it ---
+  if (isTable) {
+    document.getElementById("btnCounter").style.display = "flex";
+    const back = document.querySelector(".header .back");
+    if (back) back.setAttribute("href", "cart.html");
+    switchMethod("counter");
+  }
 
   renderSummary();
   </script>

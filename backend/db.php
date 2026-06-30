@@ -107,6 +107,15 @@ function ensure_schema(PDO $pdo, string $driver): void
         password VARCHAR(255) NOT NULL,
         role     VARCHAR(20)  NOT NULL
     )");
+
+    // One row per status change, so the customer's timeline shows real,
+    // server-stored timestamps that survive page reloads.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS order_status_history (
+        id        $autoId,
+        order_id  VARCHAR(20),
+        status    VARCHAR(20),
+        at        VARCHAR(25)
+    )");
 }
 
 function seed_menu_if_empty(PDO $pdo): void

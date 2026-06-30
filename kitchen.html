@@ -72,6 +72,16 @@
     /* Empty */
     .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
     .empty-state .big { font-size: 40px; margin-bottom: 10px; }
+
+    /* Payment badge */
+    .pay-badge { display: inline-block; padding: 3px 10px; border-radius: 999px;
+                 font-size: 12px; font-weight: 700; }
+    .pay-badge.paid   { background: #e8f5e9; color: #2e7d32; }
+    .pay-badge.unpaid { background: #fff3e0; color: #e65100; }
+    .markpaid-btn { padding: 4px 12px; border-radius: 999px; border: 1.5px solid #e65100;
+                    background: #fff; color: #e65100; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .markpaid-btn:hover    { background: #fff3e0; }
+    .markpaid-btn:disabled { opacity: .5; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -186,6 +196,21 @@
     grid.innerHTML = visible.map(o => {
       const isReady = o.status === "ready";
 
+      // Payment badge — paid (online) vs unpaid (pay at counter)
+      const pay = o.payment;
+      const paidLike = pay && (pay.status === "paid" || pay.status === "success");
+      const payBadge = pay
+        ? `<span class="pay-badge ${paidLike ? "paid" : "unpaid"}">${
+            paidLike
+              ? "✅ Paid" + (pay.payment_method ? " · " + pay.payment_method : "")
+              : "🧾 Unpaid · pay at counter"
+          }</span>`
+        : "";
+      // Staff can settle an unpaid (pay-at-counter) order once the customer pays.
+      const markPaidBtn = (pay && !paidLike)
+        ? `<button class="markpaid-btn" data-paid="${o.id}">💵 Mark Paid</button>`
+        : "";
+
       // Kitchen: show Pending / Preparing / Ready buttons (no Completed)
       // Waiter: read-only status + Completed button only if Ready
       let actionsHTML = "";
@@ -220,6 +245,7 @@
             ${o.customer_name ? " · " + o.customer_name : ""}
             · ${o.created_at || ""}
           </div>
+          ${payBadge ? `<div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">${payBadge}${markPaidBtn}</div>` : ""}
           <ul class="lines">${(o.items || []).map(it => `<li>${lineText(it)}</li>`).join("")}</ul>
           ${o.note ? `<div class="muted2">Note: ${o.note}</div>` : ""}
           <div style="font-weight:800;margin-top:6px">${formatRM(o.total)}</div>
@@ -250,6 +276,21 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: b.dataset.id, status: b.dataset.s }),
+      });
+    } catch (e) {}
+    load();
+  });
+
+  // Mark a "pay at counter" order as paid
+  document.getElementById("grid").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-paid]");
+    if (!b) return;
+    b.disabled = true;
+    try {
+      await fetch("api/mark_paid.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: b.dataset.paid }),
       });
     } catch (e) {}
     load();

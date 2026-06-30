@@ -72,6 +72,14 @@
     return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
+  // Server datetime ("2026-06-30 18:09:37") or a ms number → ms (cross-browser).
+  function tsToMs(s) {
+    if (typeof s === "number") return s;
+    if (!s) return Date.now();
+    const t = new Date(String(s).replace(" ", "T")).getTime();
+    return isNaN(t) ? Date.now() : t;
+  }
+
   function getOrderType(order) {
     if (order.order_type === "online" || order.delivery_type) {
       return order.delivery_type === "pickup" ? "pickup" : "delivery";
@@ -85,34 +93,52 @@
     return STEPS_WALKIN;
   }
 
-  function render() {
-    let order = Order.current();
-
-    // Fallback to online order
-    if (!order) {
-      const onlineRaw = localStorage.getItem("sz_online_order");
-      if (onlineRaw) {
-        const o = JSON.parse(onlineRaw);
-        order = {
-          id:           o.id,
-          table:        null,
-          customerName: o.customer_name,
-          items:        o.items || [],
-          subtotal:     o.subtotal,
-          tax:          o.tax,
-          total:        o.total,
-          status:       o.status || "pending",
-          order_type:   "online",
+  // Gather every order the customer placed (newest first). Merge the single
+  // "current"/"online" keys in for back-compat, then persist the merged list.
+  function collectOrders() {
+    const list = Orders.list();
+    const cur  = Order.current();
+    if (cur && cur.id && !list.some(o => o.id === cur.id)) list.push(cur);
+    try {
+      const o = JSON.parse(localStorage.getItem("sz_online_order") || "null");
+      if (o && o.id && !list.some(x => x.id === o.id)) {
+        list.push({
+          id: o.id, table: null, customerName: o.customer_name,
+          items: o.items || [], subtotal: o.subtotal, tax: o.tax, total: o.total,
+          status: o.status || "pending", order_type: "online",
           delivery_type: o.delivery_type || "delivery",
-          placedAt:     Date.now(),
-          history:      [{ status: "pending", at: Date.now() }],
-          remote:       true,
-        };
-        localStorage.setItem("sz_current_order", JSON.stringify(order));
+          placedAt: o.placedAt || Date.now(),
+          history: o.history || [{ status: "pending", at: Date.now() }],
+          remote: true,
+        });
       }
-    }
+    } catch (e) {}
+    Orders.save(list);
+    return list.slice().sort((a, b) => (b.placedAt || 0) - (a.placedAt || 0));
+  }
 
-    if (!order) {
+  // Keep the single-order keys in sync so the home/menu "Track" links stay correct.
+  function syncSingles(o) {
+    try {
+      const cur = Order.current();
+      if (cur && cur.id === o.id && cur.status !== o.status) {
+        cur.status = o.status; cur.history = o.history;
+        localStorage.setItem("sz_current_order", JSON.stringify(cur));
+      }
+    } catch (e) {}
+    try {
+      const oo = JSON.parse(localStorage.getItem("sz_online_order") || "null");
+      if (oo && oo.id === o.id && oo.status !== o.status) {
+        oo.status = o.status;
+        localStorage.setItem("sz_online_order", JSON.stringify(oo));
+      }
+    } catch (e) {}
+  }
+
+  function render() {
+    const orders = collectOrders();
+
+    if (!orders.length) {
       pageEl.innerHTML = `
         <div class="empty">
           <div class="big">🧾</div>
@@ -122,6 +148,39 @@
       return;
     }
 
+    const heading = orders.length > 1
+      ? `<p style="text-align:center;color:var(--muted);font-size:13px;margin:0 0 14px">
+           You have <strong>${orders.length}</strong> orders at this table — newest first.
+         </p>`
+      : "";
+
+    pageEl.innerHTML = heading
+      + orders.map(renderCard).join('<div style="height:22px"></div>')
+      + `<div style="height:18px"></div><a class="btn secondary" href="menu.html">＋ Add More Items</a>`;
+
+    // Wire up the per-order demo "advance status" buttons (local orders only).
+    orders.forEach(o => {
+      const b = document.getElementById("sim-" + o.id);
+      if (b) b.addEventListener("click", () => { advanceLocal(o.id); render(); });
+    });
+  }
+
+  function advanceLocal(id) {
+    const list = Orders.list();
+    const o = list.find(x => x.id === id);
+    if (!o) return;
+    const flow = ["pending", "preparing", "ready", "completed"];
+    const i = flow.indexOf(o.status);
+    if (i < flow.length - 1) {
+      o.status = flow[i + 1];
+      (o.history = o.history || []).push({ status: o.status, at: Date.now() });
+      Orders.save(list);
+      syncSingles(o);
+    }
+  }
+
+  // Build the card (status + timeline + summary) for a single order.
+  function renderCard(order) {
     const orderType = getOrderType(order);
     const STEPS     = getSteps(orderType);
     const etaMap    = ETA[orderType];
@@ -169,7 +228,16 @@
 
     const isComplete = displayStatus === "completed" || displayStatus === "arrived";
 
-    pageEl.innerHTML = `
+    // Payment line (dine-in orders carry order.payment; paid online or at counter)
+    const pay = order.payment;
+    const paidLike = pay && (pay.status === "paid" || pay.status === "success");
+    const payLabel = pay
+      ? (paidLike
+          ? (pay.method === "counter" ? "✅ Paid (at counter)" : "✅ Paid" + (pay.detail ? " · " + pay.detail : ""))
+          : "🧾 Pay at counter")
+      : "";
+
+    return `
       <div class="order-card">
         <div class="order-no">Order Number</div>
         <div class="order-id">#${order.id}</div>
@@ -179,6 +247,7 @@
           ${tableLabel}Placed at ${fmtTime(order.placedAt)}
           ${order.customerName ? " · " + order.customerName : ""}
         </div>
+        ${payLabel ? `<div style="font-size:13px;font-weight:700;margin-top:6px;color:${paidLike ? "var(--green)" : "#e65100"}">${payLabel}</div>` : ""}
       </div>
 
       <ul class="timeline">${timeline}</ul>
@@ -195,61 +264,75 @@
         <div class="recap-row" style="font-weight:800"><span>Total</span><span>${formatRM(order.total)}</span></div>
       </div>
 
-      <div style="height:18px"></div>
-      <a class="btn secondary" href="menu.html">＋ Add More Items</a>
-
-      ${!isComplete ? `
-        <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:18px">
-          This page updates automatically.
-        </p>
-        ${order.remote ? "" : `<button class="btn ghost" id="simBtn" style="margin-top:10px">▶︎ Demo: advance status</button>`}
-      ` : `
-        <p style="text-align:center;color:var(--green);font-weight:700;margin-top:18px">
-          ${orderType === "delivery" ? "Order delivered ✅" : orderType === "pickup" ? "Order complete ✅" : "Order completed ✅"}
-        </p>
-      `}
+      ${!isComplete
+        ? (order.remote ? "" : `<div style="text-align:center"><button class="btn ghost" id="sim-${order.id}" style="margin-top:10px">▶︎ Demo: advance status</button></div>`)
+        : `<p style="text-align:center;color:var(--green);font-weight:700;margin-top:12px">${orderType === "delivery" ? "Order delivered ✅" : orderType === "pickup" ? "Order complete ✅" : "Order completed ✅"}</p>`}
     `;
-
-    const sim = document.getElementById("simBtn");
-    if (sim) sim.addEventListener("click", () => { Order.advance(); render(); });
   }
 
   render();
 
-  // Poll API for live status updates
-  const _o = Order.current();
-  if (_o && _o.remote) {
-    const poll = setInterval(async () => {
-      const o = Order.current();
-      if (!o) { clearInterval(poll); return; }
+  // --- Live status: poll every remote order; demo-advance local (offline) ones ---
+  // An order is fully "settled" once cooking is done AND payment is in.
+  function settled(o) {
+    const statusDone = o.status === "completed" || o.status === "arrived";
+    const payDone = !o.payment || o.payment.status === "paid" || o.payment.status === "success";
+    return statusDone && payDone;
+  }
+
+  async function pollRemoteOnce() {
+    const list = Orders.list();
+    let changed = false;
+    for (const o of list) {
+      if (!o.remote || settled(o)) continue;
       try {
         const r = await fetch("api/order_status.php?id=" + encodeURIComponent(o.id), { cache: "no-store" });
         if (r.ok) {
           const j = await r.json();
-          if (j && j.status && j.status !== o.status) {
-            o.status = j.status;
-            o.history = o.history || [];
-            o.history.push({ status: j.status, at: Date.now() });
-            // Also update sz_online_order if exists
-            const onlineRaw = localStorage.getItem("sz_online_order");
-            if (onlineRaw) {
-              const oo = JSON.parse(onlineRaw);
-              oo.status = j.status;
-              localStorage.setItem("sz_online_order", JSON.stringify(oo));
-            }
-            localStorage.setItem("sz_current_order", JSON.stringify(o));
-            render();
+          if (j && j.status && j.status !== o.status) { o.status = j.status; changed = true; }
+
+          // Adopt the server's real status history (oldest first) when it grows.
+          if (j && Array.isArray(j.history)) {
+            const mapped = j.history.map(h => ({ status: h.status, at: tsToMs(h.at) }));
+            if (mapped.length !== (o.history ? o.history.length : 0)) changed = true;
+            if (mapped.length) o.history = mapped;
           }
-          if (j && (j.status === "completed" || j.status === "arrived")) clearInterval(poll);
+
+          // Reflect a "pay at counter" order being marked paid by staff.
+          if (j && j.payment && o.payment && j.payment.status && j.payment.status !== o.payment.status) {
+            o.payment.status = j.payment.status;
+            changed = true;
+          }
         }
       } catch (e) { /* keep trying */ }
+    }
+    if (changed) { Orders.save(list); list.forEach(syncSingles); render(); }
+    return list.some(o => o.remote && !settled(o));
+  }
+
+  pollRemoteOnce().then(stillActive => {
+    if (!stillActive) return;
+    const poll = setInterval(async () => {
+      if (!(await pollRemoteOnce())) clearInterval(poll);
     }, 4000);
-  } else if (_o) {
+  });
+
+  if (Orders.list().some(o => !o.remote && o.status !== "completed")) {
     const auto = setInterval(() => {
-      const o = Order.current();
-      if (!o || o.status === "completed") { clearInterval(auto); return; }
-      Order.advance();
-      render();
+      const list = Orders.list();
+      let changed = false;
+      list.forEach(o => {
+        if (o.remote || o.status === "completed") return;
+        const flow = ["pending", "preparing", "ready", "completed"];
+        const i = flow.indexOf(o.status);
+        if (i < flow.length - 1) {
+          o.status = flow[i + 1];
+          (o.history = o.history || []).push({ status: o.status, at: Date.now() });
+          changed = true;
+        }
+      });
+      if (changed) { Orders.save(list); list.forEach(syncSingles); render(); }
+      if (!list.some(o => !o.remote && o.status !== "completed")) clearInterval(auto);
     }, 8000);
   }
   </script>

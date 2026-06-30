@@ -94,6 +94,10 @@ $pdo->prepare("INSERT INTO payments
     ->execute([$id, $pay_method, $pay_detail, $total, $now]);
 
 $payment_id = $pdo->lastInsertId();
+
+// Start the status timeline.
+record_status($pdo, $id, 'pending');
+
 $pdo->commit();
 
 // Send confirmation email

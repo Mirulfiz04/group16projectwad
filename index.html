@@ -29,6 +29,10 @@
       <div style="height:10px"></div>
       <a class="btn secondary" href="cart.html">View My Cart</a>
 
+      <!-- Shown only when the customer has an order in progress so they can
+           always get back to its live status (filled in by JS below). -->
+      <a class="btn secondary" id="trackBtn" href="tracking.html" style="display:none;margin-top:10px">📦 Track My Current Order →</a>
+
       <p id="modeSwitch" style="text-align:center;font-size:13px;margin-top:16px"></p>
 
       <p id="footNote" style="text-align:center;color:var(--muted);font-size:12px;margin-top:14px">
@@ -42,19 +46,40 @@
   <script>
     const params = new URLSearchParams(location.search);
 
+    // How long a scanned table stays "active". While it's active, returning to
+    // this page keeps the customer on their table — important because the in-app
+    // back arrow links to plain "index.html" (no ?table= param). After this
+    // window a leftover table is treated as stale and dropped, so a later online
+    // visitor on the same device isn't silently stuck on an old table.
+    const TABLE_SESSION_MS = 3 * 60 * 60 * 1000; // 3 hours
+
     // A table is ONLY set by scanning the QR code on a table (index.html?table=7).
-    // Accept a real table number only — ignore empty/junk values like "?table=" or
-    // "?table=abc" so an online order can never be bound to a bogus table.
+    // Accept a real table number only — ignore empty/junk like "?table=" or "?table=abc".
     const rawTable = (params.get("table") || "").trim();
     const isValidTable = /^\d{1,3}$/.test(rawTable) && Number(rawTable) > 0;
 
     if (isValidTable) {
+      // Switching to a DIFFERENT table → start a fresh order history so one
+      // table's orders don't show up under another.
+      if (Table.get() && Table.get() !== rawTable) {
+        ["sz_my_orders", "sz_current_order", "sz_online_order", "sz_payment", "sz_cart", "sz_checkout"]
+          .forEach(k => localStorage.removeItem(k));
+      }
+      // Fresh QR scan → bind to this table and (re)start the table session clock.
       Table.set(rawTable);
+      localStorage.setItem("sz_table_at", String(Date.now()));
     } else {
-      // No valid table in the URL → make sure no table from a previous visit
-      // leaks into this session (this is what caused online orders to sometimes
-      // show up as a "Table N" dine-in order).
-      Table.clear();
+      // No table in the URL. Keep an existing table only if it was used recently
+      // (same dining session — e.g. arrived here via the back arrow); otherwise
+      // drop it so this becomes a clean online order.
+      const at = Number(localStorage.getItem("sz_table_at") || 0);
+      const recent = Table.get() && at && (Date.now() - at < TABLE_SESSION_MS);
+      if (recent) {
+        localStorage.setItem("sz_table_at", String(Date.now())); // keep session alive
+      } else {
+        Table.clear();
+        localStorage.removeItem("sz_table_at");
+      }
     }
 
     const t = Table.get();
@@ -73,10 +98,10 @@
       modeSwitch.innerHTML =
         'Not at the restaurant? <a href="#" id="goOnline" style="color:var(--red);font-weight:700">Order online instead →</a>';
     } else {
-      // ---- Online mode ---- start a clean session so nothing carries over
-      localStorage.removeItem("sz_current_order");
-      localStorage.removeItem("sz_payment");
-      localStorage.removeItem("sz_online_order");
+      // ---- Online mode ---- start a fresh browsing session, but KEEP any
+      // order the customer has already placed so they can still track it.
+      // (Wiping sz_current_order / sz_online_order here is what made the
+      //  tracking page show "No active order" after navigating back home.)
       localStorage.removeItem("sz_checkout");
       localStorage.removeItem("sz_cart");
 
@@ -99,13 +124,28 @@
       goOnline.addEventListener("click", (e) => {
         e.preventDefault();
         Table.clear();
-        // Clear any in-progress dine-in cart/order so online starts clean.
-        ["sz_cart", "sz_current_order", "sz_payment", "sz_online_order", "sz_checkout"]
+        // Clear the table session + any in-progress dine-in cart/orders so online starts clean.
+        ["sz_table_at", "sz_cart", "sz_current_order", "sz_payment", "sz_online_order", "sz_checkout", "sz_my_orders"]
           .forEach(k => localStorage.removeItem(k));
         // Reload without the ?table= param so we re-enter in online mode.
         location.replace(location.pathname);
       });
     }
+
+    // Show "Track My Current Order" whenever the customer has a placed order
+    // that isn't finished yet — so they can always return to its live status.
+    (function showTrackIfActive() {
+      let orders = [];
+      try { orders = JSON.parse(localStorage.getItem("sz_my_orders") || "[]") || []; } catch (e) {}
+      ["sz_current_order", "sz_online_order"].forEach(k => {
+        try {
+          const o = JSON.parse(localStorage.getItem(k) || "null");
+          if (o && o.id && !orders.some(x => x.id === o.id)) orders.push(o);
+        } catch (e) {}
+      });
+      const anyActive = orders.some(o => o && o.id && o.status !== "completed" && o.status !== "arrived");
+      if (anyActive) document.getElementById("trackBtn").style.display = "block";
+    })();
   </script>
 </body>
 </html>

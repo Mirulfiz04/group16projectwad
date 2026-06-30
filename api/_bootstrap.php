@@ -31,6 +31,23 @@ function json_body(): array
     return is_array($data) ? $data : [];
 }
 
+/** Append a status change to an order's history (with a server timestamp). */
+function record_status(PDO $pdo, string $orderId, string $status): void
+{
+    $pdo->prepare("INSERT INTO order_status_history (order_id, status, at)
+                   VALUES (?, ?, ?)")
+        ->execute([$orderId, $status, date('Y-m-d H:i:s')]);
+}
+
+/** Full status history (oldest first) for an order. */
+function fetch_status_history(PDO $pdo, string $orderId): array
+{
+    $s = $pdo->prepare("SELECT status, at FROM order_status_history
+                        WHERE order_id = ? ORDER BY id ASC");
+    $s->execute([$orderId]);
+    return $s->fetchAll();
+}
+
 // Turn any uncaught error into a clean JSON 500 instead of an HTML page.
 set_exception_handler(function (Throwable $e) {
     json_out(['error' => 'server_error', 'message' => $e->getMessage()], 500);

@@ -173,6 +173,23 @@ const Order = {
   },
 };
 
+/* ---------- My orders (a list of every order placed this session) ----------
+   Lets the tracking page show ALL of a customer's orders (e.g. a dine-in table
+   that orders more than once) instead of only the most recent one. */
+const Orders = {
+  list() {
+    try { const l = JSON.parse(localStorage.getItem("sz_my_orders")); return Array.isArray(l) ? l : []; }
+    catch { return []; }
+  },
+  save(list) { localStorage.setItem("sz_my_orders", JSON.stringify(list)); },
+  add(order) {
+    if (!order || !order.id) return;
+    const list = this.list();
+    if (!list.some(o => o.id === order.id)) { list.push(order); this.save(list); }
+  },
+  clear() { localStorage.removeItem("sz_my_orders"); },
+};
+
 /* ---------- Tiny toast helper ---------- */
 function toast(msg) {
   let el = document.querySelector(".toast");

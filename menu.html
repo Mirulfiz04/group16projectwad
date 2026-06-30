@@ -13,6 +13,7 @@
     <header class="header">
       <a class="back" href="index.html">←</a>
       <div class="title">Menu <small id="tableSmall">Table —</small></div>
+      <a class="cart-link" id="trackLink" href="tracking.html" title="Track my order" style="display:none">📦</a>
       <a class="cart-link" href="cart.html">🛒<span class="cart-badge">0</span></a>
     </header>
 
@@ -88,6 +89,20 @@
   <script>
   /* ===================== Menu page logic ===================== */
   document.getElementById("tableSmall").textContent = Table.get() ? ("Table " + Table.get()) : "";
+
+  // Reveal the "Track my order" header link if a placed order is still in progress.
+  (function showTrackLink() {
+    let orders = [];
+    try { orders = JSON.parse(localStorage.getItem("sz_my_orders") || "[]") || []; } catch (e) {}
+    ["sz_current_order", "sz_online_order"].forEach(k => {
+      try {
+        const o = JSON.parse(localStorage.getItem(k) || "null");
+        if (o && o.id && !orders.some(x => x.id === o.id)) orders.push(o);
+      } catch (e) {}
+    });
+    const anyActive = orders.some(o => o && o.id && o.status !== "completed" && o.status !== "arrived");
+    if (anyActive) document.getElementById("trackLink").style.display = "block";
+  })();
 
   const menuEl   = document.getElementById("menu");
   const catsEl   = document.getElementById("cats");
