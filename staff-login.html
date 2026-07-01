@@ -45,36 +45,72 @@
   </style>
 </head>
 <body>
-  <div class="login-wrap">
-    <div class="login-card">
-      <div class="login-head">
-        <div class="logo">🍲</div>
-        <h1>Staff Login</h1>
-        <p>Sup Tulang ZZ · Kitchen &amp; Waiter</p>
+  <div class="app">
+
+    <!-- Same Hero as Index -->
+    <section class="hero">
+      <div class="logo-badge">🍲</div>
+      <div class="since">Staff Portal</div>
+      <h1>SUP TULANG ZZ</h1>
+      <div class="table-pill">👨‍🍳 <span>Staff Access</span></div>
+    </section>
+
+    <div class="landing-body">
+
+      <div class="card" style="padding:22px">
+<!-- 
+        <div class="creds-hint">
+          <strong>Demo Accounts</strong><br><br>
+
+          👨‍🍳 <strong>Kitchen</strong><br>
+          kitchen@suptulangzz.com<br>
+          password
+          <br><br>
+
+          🍽️ <strong>Waiter</strong><br>
+          waiter@suptulangzz.com<br>
+          password
+        </div> -->
+
+        <div class="err-msg" id="errMsg">
+          Invalid email or password.
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="staff@suptulangzz.com">
+        </div>
+
+        <div class="field">
+          <label>Password</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="••••••••">
+        </div>
+
+        <button class="btn" id="loginBtn">
+          Log In
+        </button>
+
+        <div style="height:10px"></div>
+
+        <a href="index.html" class="btn secondary">
+          ← Back to Main Site
+        </a>
+
       </div>
 
-      <div class="creds-hint">
-        <strong>Kitchen:</strong> kitchen@suptulangzz.com / password<br>
-        <strong>Waiter:</strong> waiter@suptulangzz.com / password
-      </div>
+      <p id="footNote"
+         style="text-align:center;color:var(--muted);font-size:12px;margin-top:24px">
+        Authorized staff only
+      </p>
 
-      <div class="err-msg" id="errMsg">Invalid email or password.</div>
-
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" type="email" placeholder="staff@suptulangzz.com" />
-      </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input id="password" type="password" placeholder="••••••••" />
-      </div>
-
-      <button class="btn" id="loginBtn">Log In</button>
-
-      <div class="login-footer">
-        <a href="index.html" style="color:var(--muted)">← Back to main site</a>
-      </div>
     </div>
+
   </div>
 
   <script>
@@ -99,19 +135,31 @@
     }
 
     btn.disabled = true;
-    btn.textContent = "Logging in…";
+    btn.textContent = "Logging in...";
     errMsg.style.display = "none";
 
     try {
       const r = await fetch("api/staff_auth.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "login", email, password }),
+        body: JSON.stringify({
+          action: "login",
+          email,
+          password
+        }),
       });
+
       const j = await r.json();
 
       if (j && j.ok) {
-        localStorage.setItem("sz_staff", JSON.stringify({ role: j.role, name: j.name }));
+        localStorage.setItem(
+          "sz_staff",
+          JSON.stringify({
+            role: j.role,
+            name: j.name
+          })
+        );
+
         location.href = "kitchen.html";
       } else {
         errMsg.textContent = "Invalid email or password.";
@@ -119,13 +167,16 @@
         btn.disabled = false;
         btn.textContent = "Log In";
       }
+
     } catch (e) {
-      errMsg.textContent = "Cannot reach server. Make sure XAMPP is running.";
+      errMsg.textContent =
+        "Cannot reach server. Make sure XAMPP is running.";
       errMsg.style.display = "block";
       btn.disabled = false;
       btn.textContent = "Log In";
     }
   });
   </script>
+
 </body>
 </html>
